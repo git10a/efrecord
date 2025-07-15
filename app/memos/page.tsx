@@ -141,7 +141,7 @@ export default function MemosPage() {
                         {formatDate(memo.match_date)}
                       </span>
                       <span className="text-sm text-gray-400">vs</span>
-                      <span className="font-medium text-gray-800">
+                      <span className="px-3 py-1 bg-gray-100 border border-gray-200 rounded-full text-sm font-medium text-gray-700">
                         {memo.opponent_name}
                       </span>
                     </div>

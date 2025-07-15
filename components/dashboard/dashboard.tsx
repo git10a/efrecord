@@ -261,14 +261,15 @@ export default function Dashboard({ userId }: DashboardProps) {
                       >
                         {getResultText(match.result)}
                       </span>
+                      <span className="text-gray-500">vs</span>
                       <span 
-                        className="font-medium text-gray-900 hover:text-blue-600 cursor-pointer"
+                        className="px-3 py-1 bg-gray-100 hover:bg-gray-200 border border-gray-200 hover:border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:text-gray-900 cursor-pointer transition-all duration-200 shadow-sm"
                         onClick={(e) => {
                           e.stopPropagation()
                           router.push(`/matches?opponent=${match.opponent_id}`)
                         }}
                       >
-                        vs {(match.opponents as { name: string })?.name || '不明'}
+                        {(match.opponents as { name: string })?.name || '不明'}
                       </span>
                     </div>
                     <div className="text-right">

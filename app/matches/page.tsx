@@ -16,6 +16,7 @@ interface Match {
   result: string
   match_date: string
   memo: string | null
+  opponent_id: string
   opponents: { name: string }
 }
 
@@ -146,9 +147,18 @@ function MatchesContent() {
                         {getResultText(match.result)}
                       </span>
                       {!opponentName && (
-                        <span className="font-medium">
-                          vs {(match.opponents as { name: string })?.name || '不明'}
-                        </span>
+                        <>
+                          <span className="text-gray-500">vs</span>
+                          <span 
+                            className="px-3 py-1 bg-gray-100 hover:bg-gray-200 border border-gray-200 hover:border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:text-gray-900 cursor-pointer transition-all duration-200 shadow-sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/matches?opponent=${match.opponent_id}`)
+                            }}
+                          >
+                            {(match.opponents as { name: string })?.name || '不明'}
+                          </span>
+                        </>
                       )}
                       {match.memo && (
                         <span className="text-sm text-gray-500 truncate max-w-32">
