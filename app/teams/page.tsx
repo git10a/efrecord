@@ -385,7 +385,7 @@ export default function TeamsPage() {
                   ) : (
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-3">
-                        <span className="font-medium">{team.name}</span>
+                        <span className="font-medium text-gray-900">{team.name}</span>
                       </div>
                       <div className="flex gap-2">
                         <Button

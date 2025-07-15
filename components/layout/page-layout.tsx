@@ -29,7 +29,7 @@ export function PageLayout({ children, title, showBack = true, actions }: PageLa
                   onClick={() => router.push('/')}
                   className="border-gray-200 hover:bg-gray-50"
                 >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  <ArrowLeft className="w-4 h-4 mr-1" />
                   戻る
                 </Button>
               )}
