@@ -21,7 +21,7 @@ type RawMatch = {
   memo: string
   result: string
   created_at: string
-  opponents: { name: string }[] | null
+  opponents: { name: string } | null
 }
 
 export default function MemosPage() {
@@ -57,10 +57,10 @@ export default function MemosPage() {
 
       if (error) throw error
 
-      const formattedMemos = (data as RawMatch[] | null)?.map((match) => ({
+      const formattedMemos = (data as any[])?.map((match) => ({
         id: match.id,
         match_date: match.match_date,
-        opponent_name: match.opponents?.[0]?.name || '不明',
+        opponent_name: match.opponents?.name || '不明',
         result: match.result,
         memo: match.memo,
         created_at: match.created_at
