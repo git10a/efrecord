@@ -1,10 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Trophy, Target, TrendingUp, Plus, LogOut } from 'lucide-react'
+import { Trophy, Target, TrendingUp, Plus, LogOut, Activity, Flame, CloudRain, Umbrella } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -12,9 +13,48 @@ interface DashboardProps {
   userId: string
 }
 
+type PeriodFilter = 'all' | '1month' | '1week' | '3days' | 'today'
+
+const getPeriodLabel = (period: PeriodFilter): string => {
+  switch (period) {
+    case 'all': return '全期間'
+    case '1month': return '1ヶ月'
+    case '1week': return '1週間'
+    case '3days': return '3日'
+    case 'today': return '今日'
+  }
+}
+
+const getDateFilter = (period: PeriodFilter): string | null => {
+  if (period === 'all') return null
+  
+  const now = new Date()
+  let startDate: Date
+  
+  switch (period) {
+    case '1month':
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
+      break
+    case '1week':
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      break
+    case '3days':
+      startDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
+      break
+    case 'today':
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      break
+    default:
+      return null
+  }
+  
+  return startDate.toISOString().split('T')[0]
+}
+
 export default function Dashboard({ userId }: DashboardProps) {
   const supabase = createClient()
   const router = useRouter()
+  const [scoringPeriod, setScoringPeriod] = useState<PeriodFilter>('all')
 
   const { data: userStats } = useQuery({
     queryKey: ['userStats', userId],
@@ -78,6 +118,27 @@ export default function Dashboard({ userId }: DashboardProps) {
     }
   })
 
+  // 平均得点・失点を計算するためのクエリ
+  const { data: scoringData } = useQuery({
+    queryKey: ['scoringData', userId, scoringPeriod],
+    queryFn: async () => {
+      let query = supabase
+        .from('matches')
+        .select('user_score, opponent_score, match_date')
+        .eq('user_id', userId)
+      
+      const dateFilter = getDateFilter(scoringPeriod)
+      if (dateFilter) {
+        query = query.gte('match_date', dateFilter)
+      }
+      
+      const { data, error } = await query
+      
+      if (error) throw error
+      return data
+    }
+  })
+
   const getResultColor = (result: string) => {
     switch (result) {
       case 'win': return 'text-green-700 bg-green-100 border border-green-200'
@@ -102,6 +163,50 @@ export default function Dashboard({ userId }: DashboardProps) {
     return `${Math.abs(streak)}連敗中...`
   }
 
+  const getStreakIcon = (streak: number) => {
+    const absStreak = Math.abs(streak)
+    
+    if (streak > 0) {
+      // 連勝時は火のアイコン、段階的に大きく
+      if (absStreak >= 20) return { icon: Flame, size: 'w-8 h-8' }
+      if (absStreak >= 10) return { icon: Flame, size: 'w-7 h-7' }
+      if (absStreak >= 5) return { icon: Flame, size: 'w-6 h-6' }
+      if (absStreak >= 3) return { icon: Flame, size: 'w-5 h-5' }
+      return { icon: Flame, size: 'w-4 h-4' }
+    } else if (streak < 0) {
+      // 連敗時は雨+傘のアイコン、段階的に大きく
+      if (absStreak >= 20) return { icon: CloudRain, size: 'w-8 h-8' }
+      if (absStreak >= 10) return { icon: CloudRain, size: 'w-7 h-7' }
+      if (absStreak >= 5) return { icon: CloudRain, size: 'w-6 h-6' }
+      if (absStreak >= 3) return { icon: CloudRain, size: 'w-5 h-5' }
+      return { icon: CloudRain, size: 'w-4 h-4' }
+    }
+    
+    return { icon: TrendingUp, size: 'w-6 h-6' }
+  }
+
+  const getStreakBackground = (streak: number) => {
+    const absStreak = Math.abs(streak)
+    
+    if (streak > 0) {
+      // 連勝時は明るい色、段階的に明るく
+      if (absStreak >= 20) return 'bg-gradient-to-r from-yellow-300 to-orange-300'
+      if (absStreak >= 10) return 'bg-gradient-to-r from-yellow-400 to-orange-400'
+      if (absStreak >= 5) return 'bg-gradient-to-r from-yellow-500 to-orange-500'
+      if (absStreak >= 3) return 'bg-gradient-to-r from-yellow-600 to-orange-600'
+      return 'bg-orange-500'
+    } else if (streak < 0) {
+      // 連敗時は暗い色、段階的に暗く
+      if (absStreak >= 20) return 'bg-gradient-to-r from-gray-700 to-slate-800'
+      if (absStreak >= 10) return 'bg-gradient-to-r from-gray-600 to-slate-700'
+      if (absStreak >= 5) return 'bg-gradient-to-r from-gray-500 to-slate-600'
+      if (absStreak >= 3) return 'bg-gradient-to-r from-gray-400 to-slate-500'
+      return 'bg-gray-500'
+    }
+    
+    return 'bg-orange-500'
+  }
+
   const winRate = userStats && userStats.total_matches > 0 
     ? Math.round((userStats.total_wins / userStats.total_matches) * 100)
     : 0
@@ -109,6 +214,18 @@ export default function Dashboard({ userId }: DashboardProps) {
   const recent10WinRate = recent10Matches && recent10Matches.length > 0
     ? Math.round((recent10Matches.filter(m => m.result === 'win').length / recent10Matches.length) * 100)
     : 0
+
+  // 合計と平均得点・失点を計算
+  const totalPointsScored = scoringData ? scoringData.reduce((sum, match) => sum + match.user_score, 0) : 0
+  const totalPointsConceded = scoringData ? scoringData.reduce((sum, match) => sum + match.opponent_score, 0) : 0
+  
+  const averagePointsScored = scoringData && scoringData.length > 0
+    ? (totalPointsScored / scoringData.length).toFixed(1)
+    : '0.0'
+
+  const averagePointsConceded = scoringData && scoringData.length > 0
+    ? (totalPointsConceded / scoringData.length).toFixed(1)
+    : '0.0'
 
   const handleLogout = async () => {
     try {
@@ -174,15 +291,60 @@ export default function Dashboard({ userId }: DashboardProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 統計カード */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
+          <Card className="bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
             <div className="p-6">
-              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Trophy className="w-6 h-6 text-white" />
+              <div className="flex items-center justify-center mb-3">
+                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                  <Activity className="w-6 h-6 text-white" />
+                </div>
               </div>
-              <div className="text-3xl font-bold text-gray-800 mb-1">
-                {userStats?.total_wins || 0}
+              <div className="text-sm font-medium text-gray-600 mb-3 text-center">得失点</div>
+              
+              {/* 期間選択ボタン */}
+              <div className="mb-4">
+                <div className="flex flex-wrap gap-1 justify-center">
+                  {(['all', '1month', '1week', '3days', 'today'] as PeriodFilter[]).map((period) => (
+                    <button
+                      key={period}
+                      onClick={() => setScoringPeriod(period)}
+                      className={`px-2 py-1 text-xs rounded transition-colors ${
+                        scoringPeriod === period
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {getPeriodLabel(period)}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="text-sm font-medium text-gray-600">勝利数</div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-center gap-4">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-green-600">{totalPointsScored}</div>
+                    <div className="text-xs text-gray-500">合計得点</div>
+                  </div>
+                  <div className="text-gray-300">|</div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-red-600">{totalPointsConceded}</div>
+                    <div className="text-xs text-gray-500">合計失点</div>
+                  </div>
+                </div>
+                <div className="border-t border-gray-100 pt-2">
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-green-600">{averagePointsScored}</div>
+                      <div className="text-xs text-gray-500">平均得点</div>
+                    </div>
+                    <div className="text-gray-300">|</div>
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-red-600">{averagePointsConceded}</div>
+                      <div className="text-xs text-gray-500">平均失点</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </Card>
           
@@ -203,8 +365,11 @@ export default function Dashboard({ userId }: DashboardProps) {
           
           <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
             <div className="p-6">
-              <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                <TrendingUp className="w-6 h-6 text-white" />
+              <div className={`w-12 h-12 ${getStreakBackground(userStats?.current_streak || 0)} rounded-full flex items-center justify-center mx-auto mb-3`}>
+                {(() => {
+                  const { icon: IconComponent, size } = getStreakIcon(userStats?.current_streak || 0)
+                  return <IconComponent className={`${size} text-white`} />
+                })()}
               </div>
               <div className="text-lg font-bold text-gray-800 mb-1">
                 {getStreakText(userStats?.current_streak || 0)}
