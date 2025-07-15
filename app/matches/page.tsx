@@ -91,7 +91,7 @@ export default function MatchesPage() {
     } finally {
       setLoading(false)
     }
-  }, [opponentId, page])
+  }, [opponentId, page, router])
 
   const getResultColor = (result: string) => {
     switch (result) {

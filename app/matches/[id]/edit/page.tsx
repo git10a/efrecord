@@ -24,7 +24,7 @@ interface Match {
   opponents: { name: string }
 }
 
-export default function EditMatchPage({ params }: { params: { id: string } }) {
+export default function EditMatchPage({ params }: { params: Promise<{ id: string }> }) {
   const [match, setMatch] = useState<Match | null>(null)
   const [opponents, setOpponents] = useState<Opponent[]>([])
   const [selectedOpponentId, setSelectedOpponentId] = useState('')
@@ -33,15 +33,25 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
   const [memo, setMemo] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [matchId, setMatchId] = useState<string | null>(null)
   const router = useRouter()
   const queryClient = useQueryClient()
 
   useEffect(() => {
-    fetchMatch()
-    fetchOpponents()
-  }, [params.id])
+    params.then(resolvedParams => {
+      setMatchId(resolvedParams.id)
+    })
+  }, [params])
+
+  useEffect(() => {
+    if (matchId) {
+      fetchMatch()
+      fetchOpponents()
+    }
+  }, [matchId, fetchMatch])
 
   const fetchMatch = useCallback(async () => {
+    if (!matchId) return
     try {
       const supabase = createClient()
       const { data, error } = await supabase
@@ -50,7 +60,7 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
           *,
           opponents(name)
         `)
-        .eq('id', params.id)
+        .eq('id', matchId)
         .single()
 
       if (error) throw error
@@ -64,7 +74,7 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
       console.error('Error fetching match:', err)
       setError('試合データの取得に失敗しました')
     }
-  }, [params.id])
+  }, [matchId])
 
   const fetchOpponents = async () => {
     try {
