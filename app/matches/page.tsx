@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -19,7 +19,7 @@ interface Match {
   opponents: { name: string }
 }
 
-export default function MatchesPage() {
+function MatchesContent() {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
@@ -29,10 +29,6 @@ export default function MatchesPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const opponentId = searchParams.get('opponent')
-
-  useEffect(() => {
-    fetchMatches(true)
-  }, [opponentId])
 
   const fetchMatches = useCallback(async (reset = false) => {
     setLoading(true)
@@ -92,6 +88,10 @@ export default function MatchesPage() {
       setLoading(false)
     }
   }, [opponentId, page, router])
+
+  useEffect(() => {
+    fetchMatches(true)
+  }, [opponentId, fetchMatches])
 
   const getResultColor = (result: string) => {
     switch (result) {
@@ -196,5 +196,13 @@ export default function MatchesPage() {
         </Card>
       </div>
     </PageLayout>
+  )
+}
+
+export default function MatchesPage() {
+  return (
+    <Suspense>
+      <MatchesContent />
+    </Suspense>
   )
 }

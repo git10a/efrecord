@@ -37,19 +37,6 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
   const router = useRouter()
   const queryClient = useQueryClient()
 
-  useEffect(() => {
-    params.then(resolvedParams => {
-      setMatchId(resolvedParams.id)
-    })
-  }, [params])
-
-  useEffect(() => {
-    if (matchId) {
-      fetchMatch()
-      fetchOpponents()
-    }
-  }, [matchId, fetchMatch])
-
   const fetchMatch = useCallback(async () => {
     if (!matchId) return
     try {
@@ -76,7 +63,7 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
     }
   }, [matchId])
 
-  const fetchOpponents = async () => {
+  const fetchOpponents = useCallback(async () => {
     try {
       const supabase = createClient()
       const { data, error } = await supabase
@@ -89,7 +76,20 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
     } catch (err) {
       console.error('Error fetching opponents:', err)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    params.then(resolvedParams => {
+      setMatchId(resolvedParams.id)
+    })
+  }, [params])
+
+  useEffect(() => {
+    if (matchId) {
+      fetchMatch()
+      fetchOpponents()
+    }
+  }, [matchId, fetchMatch, fetchOpponents])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -125,7 +125,7 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
           memo: memo.trim() || null,
           updated_at: new Date().toISOString()
         })
-        .eq('id', params.id)
+        .eq('id', matchId)
         .eq('user_id', user.id)
 
       if (error) throw error
@@ -161,7 +161,7 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
       const { error } = await supabase
         .from('matches')
         .delete()
-        .eq('id', params.id)
+        .eq('id', matchId)
         .eq('user_id', user.id)
 
       if (error) throw error
@@ -219,7 +219,7 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                 >
                   <option value="">対戦相手を選択</option>
-                  {opponents.map((opponent) => (
+                  {opponents.map((opponent: Opponent) => (
                     <option key={opponent.id} value={opponent.id}>
                       {opponent.name}
                     </option>

@@ -12,6 +12,7 @@ interface Match {
   opponent_score: number
   result: string
   match_date: string
+  created_at: string
 }
 
 interface TeamStatsProps {
