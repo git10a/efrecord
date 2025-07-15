@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { TeamWinRateChart } from './team-win-rate-chart'
-import { Trophy, Target, TrendingUp, Users, Activity, Flame, CloudRain, Umbrella } from 'lucide-react'
+import { Target, TrendingUp, Activity, Flame, CloudRain } from 'lucide-react'
 
 interface Match {
   id: string
@@ -76,7 +76,7 @@ interface TeamStatsData {
   averagePointsConceded: number
 }
 
-export function TeamStats({ userId, opponentId, teamName }: TeamStatsProps) {
+export function TeamStats({ userId, opponentId }: TeamStatsProps) {
   const supabase = createClient()
   const [scoringPeriod, setScoringPeriod] = useState<PeriodFilter>('all')
 
