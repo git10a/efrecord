@@ -262,7 +262,7 @@ export default function Dashboard({ userId }: DashboardProps) {
                         {getResultText(match.result)}
                       </span>
                       <span 
-                        className="font-medium hover:text-blue-600 cursor-pointer"
+                        className="font-medium text-gray-900 hover:text-blue-600 cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation()
                           router.push(`/matches?opponent=${match.opponent_id}`)
