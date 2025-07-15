@@ -272,7 +272,7 @@ export default function Dashboard({ userId }: DashboardProps) {
                       </span>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium">
+                      <div className="font-medium text-gray-900">
                         {match.user_score} - {match.opponent_score}
                       </div>
                       <div className="text-sm text-gray-500">
