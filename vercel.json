@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd match-recorder && npm run build",
+  "outputDirectory": "match-recorder/.next",
+  "installCommand": "cd match-recorder && npm install"
+}
