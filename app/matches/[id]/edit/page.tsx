@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
@@ -41,7 +41,7 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
     fetchOpponents()
   }, [params.id])
 
-  const fetchMatch = async () => {
+  const fetchMatch = useCallback(async () => {
     try {
       const supabase = createClient()
       const { data, error } = await supabase
@@ -64,7 +64,7 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
       console.error('Error fetching match:', err)
       setError('試合データの取得に失敗しました')
     }
-  }
+  }, [params.id])
 
   const fetchOpponents = async () => {
     try {

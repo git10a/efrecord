@@ -268,7 +268,7 @@ export default function Dashboard({ userId }: DashboardProps) {
                           router.push(`/matches?opponent=${match.opponent_id}`)
                         }}
                       >
-                        vs {(match.opponents as any)?.name || '不明'}
+                        vs {(match.opponents as { name: string })?.name || '不明'}
                       </span>
                     </div>
                     <div className="text-right">

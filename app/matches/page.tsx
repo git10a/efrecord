@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -34,7 +34,7 @@ export default function MatchesPage() {
     fetchMatches(true)
   }, [opponentId])
 
-  const fetchMatches = async (reset = false) => {
+  const fetchMatches = useCallback(async (reset = false) => {
     setLoading(true)
     try {
       const supabase = createClient()
@@ -84,14 +84,14 @@ export default function MatchesPage() {
 
       // 対戦相手名を取得
       if (opponentId && data && data.length > 0) {
-        setOpponentName((data[0].opponents as any)?.name || '不明')
+        setOpponentName((data[0].opponents as { name: string })?.name || '不明')
       }
     } catch (err) {
       console.error('Error fetching matches:', err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [opponentId, page])
 
   const getResultColor = (result: string) => {
     switch (result) {
@@ -147,7 +147,7 @@ export default function MatchesPage() {
                       </span>
                       {!opponentName && (
                         <span className="font-medium">
-                          vs {(match.opponents as any)?.name || '不明'}
+                          vs {(match.opponents as { name: string })?.name || '不明'}
                         </span>
                       )}
                       {match.memo && (

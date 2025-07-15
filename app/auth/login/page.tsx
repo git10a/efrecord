@@ -26,7 +26,7 @@ export default function LoginPage() {
       if (error) {
         setError('Googleログインに失敗しました')
       }
-    } catch (err) {
+    } catch {
       setError('Googleログインに失敗しました')
     } finally {
       setLoading(false)

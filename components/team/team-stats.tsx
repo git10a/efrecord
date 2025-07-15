@@ -6,6 +6,14 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { TeamWinRateChart } from './team-win-rate-chart'
 import { Trophy, Target, TrendingUp, Users } from 'lucide-react'
 
+interface Match {
+  id: string
+  user_score: number
+  opponent_score: number
+  result: string
+  match_date: string
+}
+
 interface TeamStatsProps {
   userId: string
   opponentId: string
@@ -21,7 +29,7 @@ interface TeamStatsData {
   bestWinStreak: number
   worstLossStreak: number
   recentWinRate: number
-  matches: any[]
+  matches: Match[]
 }
 
 export function TeamStats({ userId, opponentId, teamName }: TeamStatsProps) {

@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { PageLayout } from '@/components/layout/page-layout'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Calendar, FileText, Trophy } from 'lucide-react'
+import { Card, CardHeader, CardContent } from '@/components/ui/card'
+import { Calendar, FileText } from 'lucide-react'
 
 interface MatchMemo {
   id: string
