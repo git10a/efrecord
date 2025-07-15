@@ -240,8 +240,8 @@ export default function Dashboard({ userId }: DashboardProps) {
               </CardTitle>
               <Link href="/matches/new">
                 <Button size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  結果を記録する
+                  <Plus className="w-4 h-4 mr-1" />
+                  記録
                 </Button>
               </Link>
             </div>
