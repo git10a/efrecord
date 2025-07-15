@@ -241,7 +241,7 @@ export default function Dashboard({ userId }: DashboardProps) {
               <Link href="/matches/new">
                 <Button size="sm">
                   <Plus className="w-4 h-4 mr-1" />
-                  記録
+                  結果を記録する
                 </Button>
               </Link>
             </div>
