@@ -1,57 +1,69 @@
-# EV Library - バレーボール試合記録システム
+# eF record - イーフト対戦記録アプリ
 
-バレーボールの試合結果を記録・管理するためのWebアプリケーションです。
+イーフトウイニングイレブンの対戦記録を管理するWebアプリケーションです。
 
 ## 機能
 
-- 試合結果の記録
-- チーム統計の表示
-- 勝率チャートの表示
-- メモ機能
-- ユーザー認証
+- **試合記録**: 対戦相手、結果、スコア、試合日の記録
+- **統計表示**: 勝率、連勝記録、最近の成績などの統計情報
+- **チーム管理**: 対戦相手チームの登録・編集・削除
+- **メモ機能**: 試合ごとのメモ記録と一覧表示
+- **ユーザー認証**: Supabaseを使用した安全なユーザー管理
 
 ## 技術スタック
 
-- **フロントエンド**: Next.js 14, TypeScript, Tailwind CSS
-- **バックエンド**: Supabase (PostgreSQL, Auth, Real-time)
-- **認証**: Supabase Auth
-- **デプロイ**: Vercel
+- **フロントエンド**: Next.js 14 (App Router)
+- **UI**: Tailwind CSS + shadcn/ui
+- **バックエンド**: Supabase (PostgreSQL + Auth)
+- **状態管理**: TanStack Query (React Query)
+- **言語**: TypeScript
 
 ## セットアップ
 
-1. リポジトリをクローン
+### 1. リポジトリのクローン
+
 ```bash
 git clone https://github.com/git10a/efrecord.git
 cd efrecord
 ```
 
-2. 依存関係をインストール
+### 2. 依存関係のインストール
+
 ```bash
-cd match-recorder
-yarn install
+npm install
 ```
 
-3. 環境変数を設定
-`.env.local`ファイルを作成し、Supabaseの設定を追加してください。
+### 3. 環境変数の設定
 
-4. 開発サーバーを起動
+`.env.local` ファイルを作成し、Supabaseの設定を追加:
+
 ```bash
-yarn dev
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-## プロジェクト構造
+### 4. データベースのセットアップ
 
+SupabaseのSQLエディタで以下のファイルを順番に実行:
+
+1. `supabase-setup.sql` - 基本テーブル作成
+2. `supabase-add-user-team-name.sql` - チーム名機能追加
+
+### 5. 開発サーバーの起動
+
+```bash
+npm run dev
 ```
-evlibrary/
-├── match-recorder/          # Next.jsアプリケーション
-│   ├── app/                # App Router
-│   ├── components/         # Reactコンポーネント
-│   ├── lib/               # ユーティリティ関数
-│   └── public/            # 静的ファイル
-├── database-design.md      # データベース設計書
-└── requirements.md         # 要件定義書
-```
+
+http://localhost:3000 でアプリケーションにアクセスできます。
+
+## データベース構造
+
+- **profiles**: ユーザープロフィール
+- **opponents**: 対戦相手チーム
+- **matches**: 試合記録
+- **user_stats**: ユーザー統計情報
 
 ## ライセンス
 
-MIT License 
+MIT License
