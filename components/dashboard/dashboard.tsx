@@ -378,31 +378,29 @@ export default function Dashboard({ userId }: DashboardProps) {
               </div>
             </Card>
           </div>
-
-          {/* 連勝連敗を横幅いっぱいで表示 */}
-          <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
-            <div className="p-6">
-              <div className={`w-12 h-12 ${getStreakBackground(userStats?.current_streak || 0)} rounded-full flex items-center justify-center mx-auto mb-3`}>
-                {(() => {
-                  const { icon: IconComponent, size } = getStreakIcon(userStats?.current_streak || 0)
-                  return <IconComponent className={`${size} text-white`} />
-                })()}
-              </div>
-              <div className="text-lg font-bold text-gray-800 mb-1">
-                {getStreakText(userStats?.current_streak || 0)}
-              </div>
-              <div className="text-sm font-medium text-gray-600">現在の連勝/連敗</div>
-            </div>
-          </Card>
         </div>
 
         {/* 最近の試合 */}
         <Card className="bg-white shadow-md">
           <CardHeader className="pb-4">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl font-bold text-gray-800">
-                最近の試合
-              </CardTitle>
+              <div className="flex items-center gap-4">
+                <CardTitle className="text-xl font-bold text-gray-800">
+                  最近の試合
+                </CardTitle>
+                {/* 連勝連敗の表示 */}
+                <div className="flex items-center gap-2">
+                  <div className={`w-8 h-8 ${getStreakBackground(userStats?.current_streak || 0)} rounded-full flex items-center justify-center`}>
+                    {(() => {
+                      const { icon: IconComponent, size } = getStreakIcon(userStats?.current_streak || 0)
+                      return <IconComponent className={`${size} text-white`} />
+                    })()}
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">
+                    {getStreakText(userStats?.current_streak || 0)}
+                  </span>
+                </div>
+              </div>
               <Link href="/matches/new">
                 <Button size="sm">
                   <Plus className="w-4 h-4 mr-1" />

@@ -346,31 +346,31 @@ export function TeamStats({ userId, opponentId, globalPeriod }: TeamStatsProps) 
           </Card>
         </div>
 
-        {/* 連勝連敗を横幅いっぱいで表示 */}
-        <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
-          <div className="p-6">
-            <div className={`w-12 h-12 ${getStreakBackground(teamStats.currentStreak)} rounded-full flex items-center justify-center mx-auto mb-3`}>
-              {(() => {
-                const { icon: IconComponent, size } = getStreakIcon(teamStats.currentStreak)
-                return <IconComponent className={`${size} text-white`} />
-              })()}
-            </div>
-            <div className="text-lg font-bold text-gray-800 mb-1">
-              {getStreakText(teamStats.currentStreak)}
-            </div>
-            <div className="text-sm font-medium text-gray-600">現在の連勝/連敗</div>
-          </div>
-        </Card>
+
       </div>
 
       {/* 勝率推移グラフ */}
       {teamStats.totalMatches > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
-              勝率推移グラフ
-            </CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                勝率推移グラフ
+              </CardTitle>
+              {/* 連勝連敗の表示 */}
+              <div className="flex items-center gap-2">
+                <div className={`w-8 h-8 ${getStreakBackground(teamStats.currentStreak)} rounded-full flex items-center justify-center`}>
+                  {(() => {
+                    const { icon: IconComponent, size } = getStreakIcon(teamStats.currentStreak)
+                    return <IconComponent className={`${size} text-white`} />
+                  })()}
+                </div>
+                <span className="text-sm font-medium text-gray-700">
+                  {getStreakText(teamStats.currentStreak)}
+                </span>
+              </div>
+            </div>
           </CardHeader>
           <div className="px-6 pb-6">
             <TeamWinRateChart matches={teamStats.matches} />
