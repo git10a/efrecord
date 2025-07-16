@@ -31,7 +31,7 @@ import { Plus, Edit2, Trash2 } from 'lucide-react'
 interface Player {
   id: string
   name: string
-  position: 'GK' | 'DF' | 'MF' | 'FW'
+  position: 'GK' | 'DF' | 'MF' | 'FW' // データベースとの互換性のため保持するが、UIでは使用しない
   number: number | null
   is_active: boolean
 }
@@ -101,12 +101,13 @@ export default function FormationPage() {
   
   // 選手管理
   const [showAddPlayer, setShowAddPlayer] = useState(false)
-  const [newPlayer, setNewPlayer] = useState({ name: '', position: 'DF', number: '' })
+  const [newPlayer, setNewPlayer] = useState({ name: '', number: '' })
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null)
   
   // フォーメーション管理
   const [showAddFormation, setShowAddFormation] = useState(false)
   const [newFormation, setNewFormation] = useState({ name: '', formation_pattern: '4-4-2' })
+  const [editingFormation, setEditingFormation] = useState<Formation | null>(null)
   
   // 選手割り当て用の状態
   const [selectedPosition, setSelectedPosition] = useState<{ x: number, y: number, display_position: string } | null>(null)
@@ -179,6 +180,15 @@ export default function FormationPage() {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+  
+  // クリーンアップ
+  useEffect(() => {
+    return () => {
+      if (updateTimer) {
+        clearTimeout(updateTimer)
+      }
+    }
+  }, [updateTimer])
 
   const fetchFormationPositions = async (formationId: string) => {
     try {
@@ -218,7 +228,7 @@ export default function FormationPage() {
         .insert({
           user_id: user.id,
           name: newPlayer.name.trim(),
-          position: newPlayer.position,
+          position: 'FW', // デフォルトとしてFWを設定（データベース制約のため）
           number: newPlayer.number ? parseInt(newPlayer.number) : null
         })
         .select()
@@ -234,7 +244,7 @@ export default function FormationPage() {
         await handleAssignPlayer(insertedPlayer.id)
       }
 
-      setNewPlayer({ name: '', position: 'DF', number: '' })
+      setNewPlayer({ name: '', number: '' })
       setShowAddPlayer(false)
     } catch (err) {
       console.error('Error adding player:', err)
@@ -258,7 +268,6 @@ export default function FormationPage() {
         .from('players')
         .update({
           name: editingPlayer.name.trim(),
-          position: editingPlayer.position,
           number: editingPlayer.number
         })
         .eq('id', editingPlayer.id)
@@ -337,6 +346,35 @@ export default function FormationPage() {
     } catch (err) {
       console.error('Error adding formation:', err)
       setError('フォーメーションの追加に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUpdateFormation = async () => {
+    if (!editingFormation || !editingFormation.name.trim()) {
+      setError('フォーメーション名を入力してください')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('formations')
+        .update({
+          name: editingFormation.name.trim()
+        })
+        .eq('id', editingFormation.id)
+
+      if (error) throw error
+
+      setEditingFormation(null)
+      fetchData()
+    } catch (err) {
+      console.error('Error updating formation:', err)
+      setError('フォーメーションの更新に失敗しました')
     } finally {
       setLoading(false)
     }
@@ -440,35 +478,50 @@ export default function FormationPage() {
     }
   }
 
-  const handlePositionUpdate = async (positionId: string, x: number, y: number) => {
-    try {
-      const supabase = createClient()
-      // ピッチサイズに合わせて座標を制限し、整数に変換
-      const clampedX = Math.round(Math.max(0, Math.min(336, x))) // 400 - 64 (カードサイズ)
-      const clampedY = Math.round(Math.max(0, Math.min(320, y))) // 384 - 64 (カードサイズ)
-      
-      const { error } = await supabase
-        .from('formation_positions')
-        .update({
-          position_x: clampedX,
-          position_y: clampedY
-        })
-        .eq('id', positionId)
-
-      if (error) throw error
-      
-      // 成功時にローカル状態も更新
-      setFormationPositions(prev => 
-        prev.map(fp => 
-          fp.id === positionId 
-            ? { ...fp, position_x: clampedX, position_y: clampedY }
-            : fp
-        )
+  // デバウンス用のタイマー
+  const [updateTimer, setUpdateTimer] = useState<NodeJS.Timeout | null>(null)
+  
+  const handlePositionUpdate = (positionId: string, x: number, y: number) => {
+    // ピッチサイズに合わせて座標を制限し、整数に変換
+    const clampedX = Math.round(Math.max(0, Math.min(336, x))) // 400 - 64 (カードサイズ)
+    const clampedY = Math.round(Math.max(0, Math.min(320, y))) // 384 - 64 (カードサイズ)
+    
+    // 即座にローカル状態を更新（リアルタイム表示）
+    setFormationPositions(prev => 
+      prev.map(fp => 
+        fp.id === positionId 
+          ? { ...fp, position_x: clampedX, position_y: clampedY }
+          : fp
       )
-    } catch (err) {
-      console.error('Error updating position:', err)
-      setError('位置の更新に失敗しました')
+    )
+    
+    // 既存のタイマーをクリア
+    if (updateTimer) {
+      clearTimeout(updateTimer)
     }
+    
+    // 500ms後にデータベースを更新（デバウンス）
+    const newTimer = setTimeout(async () => {
+      try {
+        const supabase = createClient()
+        const { error } = await supabase
+          .from('formation_positions')
+          .update({
+            position_x: clampedX,
+            position_y: clampedY
+          })
+          .eq('id', positionId)
+
+        if (error) throw error
+      } catch (err) {
+        console.error('Error updating position:', err)
+        setError('位置の更新に失敗しました')
+        // エラー時は元の位置に戻す
+        await fetchFormationPositions(currentFormation?.id || '')
+      }
+    }, 500)
+    
+    setUpdateTimer(newTimer)
   }
 
   const handlePlayerClick = async (playerId: string) => {
@@ -720,12 +773,6 @@ export default function FormationPage() {
   const handleEmptyCardClick = (position: { x: number, y: number, display_position: string }) => {
     setSelectedPosition(position)
     setShowPlayerAssignment(true)
-    
-    // 新しい選手のデフォルトポジションを設定
-    const defaultPosition = position.display_position === 'GK' ? 'GK' : 
-                          position.display_position === 'CB' || position.display_position === 'SB' ? 'DF' :
-                          position.display_position === 'DMF' || position.display_position === 'OMF' ? 'MF' : 'FW'
-    setNewPlayer(prev => ({ ...prev, position: defaultPosition }))
   }
 
   return (
@@ -763,16 +810,6 @@ export default function FormationPage() {
                         value={newPlayer.name}
                         onChange={(e) => setNewPlayer(prev => ({ ...prev, name: e.target.value }))}
                       />
-                                             <Select
-                         value={newPlayer.position}
-                         onChange={(e) => setNewPlayer(prev => ({ ...prev, position: e.target.value as 'GK' | 'DF' | 'MF' | 'FW' }))}
-                         options={[
-                           { value: 'GK', label: 'GK' },
-                           { value: 'DF', label: 'DF' },
-                           { value: 'MF', label: 'MF' },
-                           { value: 'FW', label: 'FW' }
-                         ]}
-                       />
                       <Input
                         placeholder="背番号（任意）"
                         type="number"
@@ -810,7 +847,7 @@ export default function FormationPage() {
                         <div>
                           <div className="font-medium">{player.name}</div>
                           <div className="text-sm text-gray-500">
-                            {player.position} {player.number && `#${player.number}`}
+                            {player.number && `#${player.number}`}
                           </div>
                         </div>
                         <div className="flex gap-1">
@@ -897,15 +934,31 @@ export default function FormationPage() {
                   {formations.map((formation) => (
                     <div
                       key={formation.id}
-                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                      className={`p-3 border rounded-lg transition-colors ${
                         currentFormation?.id === formation.id
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
-                      onClick={() => handleFormationChange(formation.id)}
                     >
-                      <div className="font-medium">{formation.name}</div>
-                      <div className="text-sm text-gray-500">{formation.formation_pattern}</div>
+                      <div className="flex items-center justify-between">
+                        <div 
+                          className="flex-1 cursor-pointer"
+                          onClick={() => handleFormationChange(formation.id)}
+                        >
+                          <div className="font-medium">{formation.name}</div>
+                          <div className="text-sm text-gray-500">{formation.formation_pattern}</div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingFormation(formation)
+                          }}
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1053,7 +1106,7 @@ export default function FormationPage() {
                     >
                       <div className="font-medium text-sm">{position.player.name}</div>
                       <div className="text-xs text-gray-500">
-                        {position.player.position} {position.player.number && `#${position.player.number}`}
+                        {position.player.number && `#${position.player.number}`}
                       </div>
                       <Button
                         size="sm"
@@ -1095,16 +1148,6 @@ export default function FormationPage() {
                   value={editingPlayer.name}
                   onChange={(e) => setEditingPlayer(prev => prev ? { ...prev, name: e.target.value } : null)}
                 />
-                                 <Select
-                   value={editingPlayer.position}
-                   onChange={(e) => setEditingPlayer(prev => prev ? { ...prev, position: e.target.value as 'GK' | 'DF' | 'MF' | 'FW' } : null)}
-                   options={[
-                     { value: 'GK', label: 'GK' },
-                     { value: 'DF', label: 'DF' },
-                     { value: 'MF', label: 'MF' },
-                     { value: 'FW', label: 'FW' }
-                   ]}
-                 />
                 <Input
                   placeholder="背番号（任意）"
                   type="number"
@@ -1156,16 +1199,6 @@ export default function FormationPage() {
                       value={newPlayer.name}
                       onChange={(e) => setNewPlayer(prev => ({ ...prev, name: e.target.value }))}
                     />
-                    <Select
-                      value={newPlayer.position}
-                      onChange={(e) => setNewPlayer(prev => ({ ...prev, position: e.target.value as 'GK' | 'DF' | 'MF' | 'FW' }))}
-                      options={[
-                        { value: 'GK', label: 'GK' },
-                        { value: 'DF', label: 'DF' },
-                        { value: 'MF', label: 'MF' },
-                        { value: 'FW', label: 'FW' }
-                      ]}
-                    />
                     <Input
                       placeholder="背番号（任意）"
                       type="number"
@@ -1198,7 +1231,7 @@ export default function FormationPage() {
                       <div>
                         <div className="font-medium">{player.name}</div>
                         <div className="text-sm text-gray-500">
-                          {player.position} {player.number && `#${player.number}`}
+                          {player.number && `#${player.number}`}
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -1243,6 +1276,30 @@ export default function FormationPage() {
                 >
                   キャンセル
                 </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* フォーメーション編集モーダル */}
+        {editingFormation && (
+          <div className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg w-96">
+              <h3 className="text-lg font-bold mb-4">フォーメーション編集</h3>
+              <div className="space-y-3">
+                <Input
+                  placeholder="フォーメーション名"
+                  value={editingFormation.name}
+                  onChange={(e) => setEditingFormation(prev => prev ? { ...prev, name: e.target.value } : null)}
+                />
+                <div className="flex gap-2">
+                  <Button onClick={handleUpdateFormation} disabled={loading}>
+                    更新
+                  </Button>
+                  <Button variant="outline" onClick={() => setEditingFormation(null)}>
+                    キャンセル
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

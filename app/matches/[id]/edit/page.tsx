@@ -510,29 +510,34 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
                     <div className="absolute right-1/4 top-0 bottom-0 border-l border-white opacity-30"></div>
                     
                     {/* 選手カード */}
-                    {formationPositions.map((position) => {
-                      const goalCount = goalRecords.find(record => record.player_id === position.player_id)?.count || 0
-                      return (
-                        <div
-                          key={position.id}
-                          className="absolute w-14 h-14 bg-white border-2 border-gray-300 rounded-lg shadow-md cursor-pointer hover:border-blue-500 transition-colors flex flex-col items-center justify-center text-xs"
-                          style={{
-                            left: `${position.position_x}%`,
-                            top: `${position.position_y}%`,
-                            transform: 'translate(-50%, -50%)'
-                          }}
-                          onClick={() => handlePlayerGoal(position.player_id, position.player.name)}
-                        >
-                          <div className="font-bold text-xs">{position.player.name}</div>
-                          <div className="text-gray-500 text-xs">{position.display_position}</div>
-                          {goalCount > 0 && (
-                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                              {goalCount}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
+                    {formationPositions
+                      .filter(position => position.position_x >= 0 && position.position_y >= 0) // ベンチの選手を除外
+                      .map((position) => {
+                        const goalCount = goalRecords.find(record => record.player_id === position.player_id)?.count || 0
+                        // 座標を256x192のピッチサイズに合わせて調整
+                        const leftPercent = (position.position_x / 400) * 100
+                        const topPercent = (position.position_y / 384) * 100
+                        
+                        return (
+                          <div
+                            key={position.id}
+                            className="absolute w-14 h-14 bg-white border-2 border-gray-300 rounded-lg shadow-md cursor-pointer hover:border-blue-500 transition-colors flex flex-col items-center justify-center text-xs"
+                            style={{
+                              left: `${leftPercent}%`,
+                              top: `${topPercent}%`,
+                              transform: 'translate(-50%, -50%)'
+                            }}
+                            onClick={() => handlePlayerGoal(position.player_id, position.player.name)}
+                          >
+                            <div className="font-bold text-xs truncate w-full text-center px-1">{position.player.name}</div>
+                            {goalCount > 0 && (
+                              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                {goalCount}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
                   </div>
 
                   {/* 得点記録一覧 */}
