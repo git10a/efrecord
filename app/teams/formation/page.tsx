@@ -7,9 +7,19 @@ import { useRouter } from 'next/navigation'
 import {
   DndContext,
   useDraggable,
+  useDroppable,
   closestCenter,
   DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  KeyboardSensor,
 } from '@dnd-kit/core'
+import {
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -102,6 +112,22 @@ export default function FormationPage() {
   const [selectedPosition, setSelectedPosition] = useState<{ x: number, y: number, display_position: string } | null>(null)
   const [showPlayerAssignment, setShowPlayerAssignment] = useState(false)
   
+  // ドラッグ&ドロップ用の状態
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [draggedPlayer, setDraggedPlayer] = useState<FormationPosition | null>(null)
+  
+  // センサーの設定
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+  
   const router = useRouter()
 
   useEffect(() => {
@@ -187,7 +213,7 @@ export default function FormationPage() {
       
       if (!user) return
 
-      const { error } = await supabase
+      const { data: insertedPlayer, error } = await supabase
         .from('players')
         .insert({
           user_id: user.id,
@@ -195,12 +221,21 @@ export default function FormationPage() {
           position: newPlayer.position,
           number: newPlayer.number ? parseInt(newPlayer.number) : null
         })
+        .select()
+        .single()
 
       if (error) throw error
 
+      // 選手データを更新
+      await fetchData()
+      
+      // 選手割り当てモードの場合、自動的に割り当て
+      if (selectedPosition && currentFormation && insertedPlayer) {
+        await handleAssignPlayer(insertedPlayer.id)
+      }
+
       setNewPlayer({ name: '', position: 'DF', number: '' })
       setShowAddPlayer(false)
-      fetchData()
     } catch (err) {
       console.error('Error adding player:', err)
       setError('選手の追加に失敗しました')
@@ -474,19 +509,20 @@ export default function FormationPage() {
     position: FormationPosition
   }) {
     // dnd-kitのuseDraggableフックを使う
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
       id: position.id,
       data: {
-        x: position.position_x,
-        y: position.position_y,
+        type: 'player',
+        position: position,
       },
     })
+    
     // transformで現在の位置を反映
     const style = {
       position: 'absolute' as const,
-      left: position.position_x,
-      top: position.position_y,
-      transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
+      left: `${position.position_x}px`,
+      top: `${position.position_y}px`,
+      transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
       width: '4rem',
       height: '4rem',
       background: 'white',
@@ -498,29 +534,82 @@ export default function FormationPage() {
       alignItems: 'center',
       justifyContent: 'center',
       fontSize: '0.75rem',
-      cursor: 'grab',
-      zIndex: 10,
+      cursor: isDragging ? 'grabbing' : 'grab',
+      zIndex: isDragging ? 20 : 10,
+      opacity: isDragging ? 0.5 : 1,
     }
+    
     return (
       <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-        <div className="font-bold">{position.player.name}</div>
-        <div className="text-gray-500">{position.display_position}</div>
+        <div className="font-bold text-center text-xs truncate w-full px-1">{position.player.name}</div>
+        <div className="text-gray-500 text-xs">{position.display_position}</div>
+      </div>
+    )
+  }
+  
+  // ドロップエリアコンポーネント
+  function DroppableArea({ children }: { children: React.ReactNode }) {
+    const { setNodeRef } = useDroppable({
+      id: 'pitch',
+    })
+    
+    return (
+      <div ref={setNodeRef} className="relative w-full h-96 bg-green-600 rounded-lg overflow-hidden">
+        {children}
       </div>
     )
   }
 
+  // ドラッグ開始時の処理
+  function handleDragStart(event: DragStartEvent) {
+    const { active } = event
+    setActiveId(active.id as string)
+    
+    const position = formationPositions.find(p => p.id === active.id)
+    if (position) {
+      setDraggedPlayer(position)
+    }
+  }
+
   // ドラッグ終了時の処理を追加
-  type DragEndEventType = DragEndEvent & { active: { id: string }, delta: { x: number, y: number } }
-  function handleDragEnd(event: DragEndEventType) {
-    const { active, delta } = event
-    // 対象のpositionを探す
-    const pos = formationPositions.find(p => p.id === active.id)
-    if (!pos) return
-    // 新しい位置を計算
-    const newX = pos.position_x + (delta?.x || 0)
-    const newY = pos.position_y + (delta?.y || 0)
-    // 位置を更新
-    handlePositionUpdate(pos.id, newX, newY)
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    
+    setActiveId(null)
+    setDraggedPlayer(null)
+    
+    if (!over) return
+    
+    // ピッチ上でドロップされた場合
+    if (over.id === 'pitch') {
+      const position = formationPositions.find(p => p.id === active.id)
+      if (!position) return
+      
+      // マウスの位置を取得してピッチ内の相対位置に変換
+      const rect = (over.rect as any)
+      const pitchRect = { width: 400, height: 384 } // ピッチのサイズ
+      
+      let newX = position.position_x
+      let newY = position.position_y
+      
+      // deltaが利用可能な場合はそれを使用
+      if (event.delta) {
+        newX = Math.max(0, Math.min(pitchRect.width - 64, position.position_x + event.delta.x))
+        newY = Math.max(0, Math.min(pitchRect.height - 64, position.position_y + event.delta.y))
+      }
+      
+      // 位置を更新
+      handlePositionUpdate(position.id, newX, newY)
+      
+      // 状態を更新
+      setFormationPositions(prev => 
+        prev.map(fp => 
+          fp.id === position.id 
+            ? { ...fp, position_x: newX, position_y: newY }
+            : fp
+        )
+      )
+    }
   }
 
   // 選手割り当て処理を追加
@@ -576,6 +665,12 @@ export default function FormationPage() {
   const handleEmptyCardClick = (position: { x: number, y: number, display_position: string }) => {
     setSelectedPosition(position)
     setShowPlayerAssignment(true)
+    
+    // 新しい選手のデフォルトポジションを設定
+    const defaultPosition = position.display_position === 'GK' ? 'GK' : 
+                          position.display_position === 'CB' || position.display_position === 'SB' ? 'DF' :
+                          position.display_position === 'DMF' || position.display_position === 'OMF' ? 'MF' : 'FW'
+    setNewPlayer(prev => ({ ...prev, position: defaultPosition }))
   }
 
   return (
@@ -774,15 +869,18 @@ export default function FormationPage() {
               <CardContent>
                 {/* dnd-kitのDndContextで囲む */}
                 <DndContext
+                  sensors={sensors}
                   collisionDetection={closestCenter}
+                  onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
                 >
-                  <div className="relative w-full h-96 bg-green-600 rounded-lg overflow-hidden">
+                  <DroppableArea>
                     {/* ピッチのライン */}
                     <div className="absolute inset-0 border-2 border-white opacity-30"></div>
                     <div className="absolute top-1/2 left-0 right-0 border-t border-white opacity-30"></div>
                     <div className="absolute left-1/4 top-0 bottom-0 border-l border-white opacity-30"></div>
                     <div className="absolute right-1/4 top-0 bottom-0 border-l border-white opacity-30"></div>
+                    
                     {/* フォーメーションパターンに従って空カードを表示 */}
                     {currentFormation && FORMATION_PATTERNS[currentFormation.formation_pattern] &&
                       FORMATION_PATTERNS[currentFormation.formation_pattern].map((pos, idx) => {
@@ -791,15 +889,15 @@ export default function FormationPage() {
                           fp.position_x === pos.x && fp.position_y === pos.y
                         )
                         
-                        if (assignedPosition) {
-                          // 既に割り当てられている場合は、その選手を表示
+                        if (assignedPosition && assignedPosition.id !== activeId) {
+                          // 既に割り当てられている場合は、その選手を表示（ドラッグ中でない場合のみ）
                           return (
                             <DraggablePlayerCard
                               key={assignedPosition.id}
                               position={assignedPosition}
                             />
                           )
-                        } else {
+                        } else if (!assignedPosition) {
                           // 空のカードを表示（クリック可能）
                           return (
                             <div
@@ -807,8 +905,8 @@ export default function FormationPage() {
                               onClick={() => handleEmptyCardClick(pos)}
                               style={{
                                 position: 'absolute',
-                                left: pos.x,
-                                top: pos.y,
+                                left: `${pos.x}px`,
+                                top: `${pos.y}px`,
                                 width: '4rem',
                                 height: '4rem',
                                 background: 'white',
@@ -826,21 +924,57 @@ export default function FormationPage() {
                               className="hover:border-blue-400 hover:bg-blue-50 transition-colors"
                             >
                               <div className="font-bold text-gray-400">+</div>
-                              <div className="text-gray-400">{pos.display_position}</div>
+                              <div className="text-gray-400 text-xs">{pos.display_position}</div>
                             </div>
                           )
                         }
+                        return null
                       })
                     }
-                    {/* 既存のformationPositionsの表示を削除（上記で統合済み） */}
-                    {/* {formationPositions.length > 0 && formationPositions.map((position) => (
-                      <DraggablePlayerCard
-                        key={position.id}
-                        position={position}
-                        onPositionUpdate={handlePositionUpdate}
-                      />
-                    ))} */}
-                  </div>
+                    
+                    {/* パターン外の選手を表示 */}
+                    {formationPositions
+                      .filter(position => {
+                        // パターン内にない選手のみを表示
+                        const pattern = FORMATION_PATTERNS[currentFormation?.formation_pattern || '']
+                        if (!pattern) return true
+                        return !pattern.some(pos => pos.x === position.position_x && pos.y === position.position_y)
+                      })
+                      .filter(position => position.id !== activeId)
+                      .map((position) => (
+                        <DraggablePlayerCard
+                          key={position.id}
+                          position={position}
+                        />
+                      ))
+                    }
+                  </DroppableArea>
+                  
+                  {/* ドラッグオーバーレイ */}
+                  <DragOverlay>
+                    {draggedPlayer ? (
+                      <div
+                        style={{
+                          width: '4rem',
+                          height: '4rem',
+                          background: 'white',
+                          border: '2px solid #3b82f6',
+                          borderRadius: '0.5rem',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          cursor: 'grabbing',
+                          zIndex: 1000,
+                        }}
+                      >
+                        <div className="font-bold text-center text-xs truncate w-full px-1">{draggedPlayer.player.name}</div>
+                        <div className="text-gray-500 text-xs">{draggedPlayer.display_position}</div>
+                      </div>
+                    ) : null}
+                  </DragOverlay>
                 </DndContext>
               </CardContent>
             </Card>
@@ -889,10 +1023,68 @@ export default function FormationPage() {
 
         {showPlayerAssignment && selectedPosition && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg w-96 max-h-96 overflow-y-auto">
+            <div className="bg-white p-6 rounded-lg w-96 max-h-[80vh] overflow-y-auto">
               <h3 className="text-lg font-bold mb-4">
                 {selectedPosition.display_position} に選手を割り当て
               </h3>
+              
+              {/* 新しい選手を追加ボタン */}
+              {!showAddPlayer && (
+                <div className="mb-4">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowAddPlayer(true)}
+                    className="w-full border-dashed border-2 border-blue-300 text-blue-600 hover:bg-blue-50"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    新しい選手を追加
+                  </Button>
+                </div>
+              )}
+              
+              {/* 選手追加フォーム */}
+              {showAddPlayer && (
+                <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <h4 className="font-medium mb-3">新しい選手を追加</h4>
+                  <div className="space-y-3">
+                    <Input
+                      placeholder="選手名"
+                      value={newPlayer.name}
+                      onChange={(e) => setNewPlayer(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                    <Select
+                      value={newPlayer.position}
+                      onChange={(e) => setNewPlayer(prev => ({ ...prev, position: e.target.value as 'GK' | 'DF' | 'MF' | 'FW' }))}
+                      options={[
+                        { value: 'GK', label: 'GK' },
+                        { value: 'DF', label: 'DF' },
+                        { value: 'MF', label: 'MF' },
+                        { value: 'FW', label: 'FW' }
+                      ]}
+                    />
+                    <Input
+                      placeholder="背番号（任意）"
+                      type="number"
+                      value={newPlayer.number}
+                      onChange={(e) => setNewPlayer(prev => ({ ...prev, number: e.target.value }))}
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleAddPlayer} disabled={loading}>
+                        追加して割り当て
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowAddPlayer(false)}
+                      >
+                        キャンセル
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="space-y-2">
                 {getUnassignedPlayers().map((player) => (
                   <div
@@ -908,7 +1100,8 @@ export default function FormationPage() {
                 ))}
                 {getUnassignedPlayers().length === 0 && (
                   <div className="text-center text-gray-500 py-4">
-                    割り当て可能な選手がいません
+                    <div className="mb-2">割り当て可能な選手がいません</div>
+                    <div className="text-xs">上の「新しい選手を追加」ボタンから選手を追加できます</div>
                   </div>
                 )}
               </div>
