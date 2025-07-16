@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Trophy, Target, TrendingUp, Plus, LogOut, Activity, Flame, CloudRain } from 'lucide-react'
+import { Trophy, Target, TrendingUp, Plus, LogOut, Activity, Flame, CloudRain, Zap, Wind, Droplets, CloudLightning } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -168,19 +168,19 @@ export default function Dashboard({ userId }: DashboardProps) {
     const absStreak = Math.abs(streak)
     
     if (streak > 0) {
-      // 連勝時は火のアイコン、段階的に大きく
-      if (absStreak >= 20) return { icon: Flame, size: 'w-8 h-8' }
-      if (absStreak >= 10) return { icon: Flame, size: 'w-7 h-7' }
-      if (absStreak >= 5) return { icon: Flame, size: 'w-6 h-6' }
-      if (absStreak >= 3) return { icon: Flame, size: 'w-5 h-5' }
-      return { icon: Flame, size: 'w-4 h-4' }
+      // 連勝時は火のアイコン、連続数に応じて変化
+      if (absStreak >= 20) return { icon: Zap, size: 'w-8 h-8' } // 20連勝以上：稲妻
+      if (absStreak >= 10) return { icon: Flame, size: 'w-7 h-7' } // 10連勝以上：強火
+      if (absStreak >= 5) return { icon: Flame, size: 'w-6 h-6' } // 5連勝以上：中火
+      if (absStreak >= 3) return { icon: Flame, size: 'w-5 h-5' } // 3連勝以上：小さい火
+      return { icon: Flame, size: 'w-4 h-4' } // 1連勝：小さな火
     } else if (streak < 0) {
-      // 連敗時は雨+傘のアイコン、段階的に大きく
-      if (absStreak >= 20) return { icon: CloudRain, size: 'w-8 h-8' }
-      if (absStreak >= 10) return { icon: CloudRain, size: 'w-7 h-7' }
-      if (absStreak >= 5) return { icon: CloudRain, size: 'w-6 h-6' }
-      if (absStreak >= 3) return { icon: CloudRain, size: 'w-5 h-5' }
-      return { icon: CloudRain, size: 'w-4 h-4' }
+      // 連敗時は雨のアイコン、連続数に応じて変化
+      if (absStreak >= 20) return { icon: Wind, size: 'w-8 h-8' } // 20連敗以上：台風
+      if (absStreak >= 10) return { icon: CloudLightning, size: 'w-7 h-7' } // 10連敗以上：雷雨
+      if (absStreak >= 5) return { icon: CloudRain, size: 'w-6 h-6' } // 5連敗以上：強めの雨
+      if (absStreak >= 3) return { icon: CloudRain, size: 'w-5 h-5' } // 3連敗以上：少し雨
+      return { icon: Droplets, size: 'w-4 h-4' } // 1連敗：雨粒
     }
     
     return { icon: TrendingUp, size: 'w-6 h-6' }
