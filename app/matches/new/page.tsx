@@ -29,9 +29,18 @@ export default function NewMatchPage() {
   const fetchOpponents = useCallback(async () => {
     try {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        setError('ログインしてください')
+        return
+      }
+
+      // 自分以外の全ユーザーのチームを取得
       const { data, error } = await supabase
         .from('opponents')
         .select('id, name')
+        .neq('created_by', user.id)
         .order('name')
 
       if (error) throw error

@@ -36,9 +36,17 @@ export default function TeamsPage() {
   const fetchTeams = async () => {
     try {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        setError('ログインしてください')
+        return
+      }
+
       const { data, error } = await supabase
         .from('opponents')
         .select('*')
+        .eq('created_by', user.id)
         .order('name')
 
       if (error) throw error
