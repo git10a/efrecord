@@ -20,6 +20,19 @@ interface Match {
   opponents: { name: string }
 }
 
+type PeriodFilter = 'all' | '1month' | '1week' | '3days' | 'today'
+
+const getPeriodLabel = (period: PeriodFilter): string => {
+  switch (period) {
+    case 'all': return '全期間'
+    case '1month': return '1ヶ月'
+    case '1week': return '1週間'
+    case '3days': return '3日間'
+    case 'today': return '今日'
+    default: return '全期間'
+  }
+}
+
 function MatchesContent() {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(false)
