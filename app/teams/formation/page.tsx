@@ -989,65 +989,8 @@ export default function FormationPage() {
                     <div className="absolute left-1/4 top-0 bottom-0 border-l border-white opacity-30"></div>
                     <div className="absolute right-1/4 top-0 bottom-0 border-l border-white opacity-30"></div>
                     
-                    {/* フォーメーションパターンに従って空カードを表示 */}
-                    {currentFormation && FORMATION_PATTERNS[currentFormation.formation_pattern] &&
-                      FORMATION_PATTERNS[currentFormation.formation_pattern].map((pos, idx) => {
-                        // 既に割り当てられているかチェック
-                        const assignedPosition = formationPositions.find(fp => 
-                          fp.position_x === pos.x && fp.position_y === pos.y
-                        )
-                        
-                        if (assignedPosition && assignedPosition.id !== activeId) {
-                          // 既に割り当てられている場合は、その選手を表示（ドラッグ中でない場合のみ）
-                          return (
-                            <DraggablePlayerCard
-                              key={assignedPosition.id}
-                              position={assignedPosition}
-                            />
-                          )
-                        } else if (!assignedPosition) {
-                          // 空のカードを表示（クリック可能）
-                          return (
-                            <div
-                              key={`empty-${idx}`}
-                              onClick={() => handleEmptyCardClick(pos)}
-                              style={{
-                                position: 'absolute',
-                                left: `${pos.x}px`,
-                                top: `${pos.y}px`,
-                                width: '4rem',
-                                height: '4rem',
-                                background: 'white',
-                                border: '2px dashed #d1d5db',
-                                borderRadius: '0.5rem',
-                                boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '0.75rem',
-                                zIndex: 10,
-                                cursor: 'pointer',
-                              }}
-                              className="hover:border-blue-400 hover:bg-blue-50 transition-colors"
-                            >
-                              <div className="font-bold text-gray-400">+</div>
-                              <div className="text-gray-400 text-xs">{pos.display_position}</div>
-                            </div>
-                          )
-                        }
-                        return null
-                      })
-                    }
-                    
-                    {/* パターン外のフィールドプレイヤーを表示 */}
+                    {/* すべてのフィールドプレイヤーを表示 */}
                     {getFieldPlayers()
-                      .filter(position => {
-                        // パターン内にない選手のみを表示
-                        const pattern = FORMATION_PATTERNS[currentFormation?.formation_pattern || '']
-                        if (!pattern) return true
-                        return !pattern.some(pos => pos.x === position.position_x && pos.y === position.position_y)
-                      })
                       .filter(position => position.id !== activeId)
                       .map((position) => (
                         <DraggablePlayerCard
@@ -1055,6 +998,43 @@ export default function FormationPage() {
                           position={position}
                         />
                       ))
+                    }
+                    
+                    {/* 空のカードを表示（フィールドプレイヤーが11人未満で、未使用のパターン位置のみ） */}
+                    {currentFormation && FORMATION_PATTERNS[currentFormation.formation_pattern] && getFieldPlayers().length < 11 &&
+                      FORMATION_PATTERNS[currentFormation.formation_pattern]
+                        .filter(pos => {
+                          // その位置に選手がいない場合のみ空カードを表示
+                          return !getFieldPlayers().some(fp => fp.position_x === pos.x && fp.position_y === pos.y)
+                        })
+                        .map((pos, idx) => (
+                          <div
+                            key={`empty-${idx}`}
+                            onClick={() => handleEmptyCardClick(pos)}
+                            style={{
+                              position: 'absolute',
+                              left: `${pos.x}px`,
+                              top: `${pos.y}px`,
+                              width: '4rem',
+                              height: '4rem',
+                              background: 'white',
+                              border: '2px dashed #d1d5db',
+                              borderRadius: '0.5rem',
+                              boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.75rem',
+                              zIndex: 10,
+                              cursor: 'pointer',
+                            }}
+                            className="hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                          >
+                            <div className="font-bold text-gray-400">+</div>
+                            <div className="text-gray-400 text-xs">{pos.display_position}</div>
+                          </div>
+                        ))
                     }
                   </DroppableArea>
                   

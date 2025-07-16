@@ -229,7 +229,8 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
       }
     })
     
-    setUserScore(prev => prev + 1)
+    // スコアの自動増加を削除
+    // setUserScore(prev => prev + 1)
   }
 
   const handleRemoveGoal = (playerId: string) => {
@@ -246,7 +247,8 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
       }
     })
     
-    setUserScore(prev => Math.max(0, prev - 1))
+    // スコアの自動減少を削除
+    // setUserScore(prev => Math.max(0, prev - 1))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -498,7 +500,7 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Target className="w-5 h-5 text-green-600" />
-                    得点記録（選手をクリック）
+                    得点者選択（選手をクリックして得点者を記録）
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
