@@ -25,15 +25,6 @@ interface TeamStatsProps {
 
 type PeriodFilter = 'all' | '1month' | '1week' | '3days' | 'today'
 
-const getPeriodLabel = (period: PeriodFilter): string => {
-  switch (period) {
-    case 'all': return '全期間'
-    case '1month': return '1ヶ月'
-    case '1week': return '1週間'
-    case '3days': return '3日'
-    case 'today': return '今日'
-  }
-}
 
 const getDateFilter = (period: PeriodFilter): string | null => {
   if (period === 'all') return null
