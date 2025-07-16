@@ -638,7 +638,9 @@ export default function FormationPage() {
     return (
       <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
         <div className="font-bold text-center text-xs truncate w-full px-1">{position.player.name}</div>
-        <div className="text-gray-500 text-xs">{position.display_position}</div>
+        {position.player.number && (
+          <div className="text-gray-500 text-xs">#{position.player.number}</div>
+        )}
       </div>
     )
   }
@@ -1138,7 +1140,7 @@ export default function FormationPage() {
                             className="hover:border-blue-400 hover:bg-blue-50 transition-colors"
                           >
                             <div className="font-bold text-gray-400">+</div>
-                            <div className="text-gray-400 text-xs">{pos.display_position}</div>
+                            <div className="text-gray-400 text-xs">選手追加</div>
                           </div>
                         ))
                     }
@@ -1198,7 +1200,9 @@ export default function FormationPage() {
                     }}
                   >
                     <div className="font-bold text-center text-xs truncate w-full px-1">{draggedPlayer.player.name}</div>
-                    <div className="text-gray-500 text-xs">{draggedPlayer.display_position}</div>
+                    {draggedPlayer.player.number && (
+                      <div className="text-gray-500 text-xs">#{draggedPlayer.player.number}</div>
+                    )}
                   </div>
                 ) : null}
               </DragOverlay>
@@ -1240,7 +1244,7 @@ export default function FormationPage() {
           <div className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg w-96 max-h-[80vh] overflow-y-auto">
               <h3 className="text-lg font-bold mb-4">
-                {selectedPosition.display_position} に選手を割り当て
+                選手を割り当て
               </h3>
               
               {/* 新しい選手を追加ボタン */}
