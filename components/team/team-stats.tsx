@@ -284,7 +284,7 @@ export function TeamStats({ userId, opponentId, globalPeriod }: TeamStatsProps) 
   return (
     <div className="space-y-6">
       {/* チーム別統計カード */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
           <div className="p-6">
             <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -295,7 +295,12 @@ export function TeamStats({ userId, opponentId, globalPeriod }: TeamStatsProps) 
             </div>
             <div className="text-sm font-medium text-gray-600 mb-1">勝率</div>
             <div className="text-xs text-gray-500">
-              直近10試合: {Math.round(teamStats.recentWinRate)}%
+              直近10試合: {Math.round(teamStats.recentWinRate)}% | 総試合数: {teamStats.totalMatches}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              <span className="text-green-600 font-medium">{teamStats.wins}勝</span> 
+              <span className="text-gray-500 mx-1">{teamStats.draws}分</span> 
+              <span className="text-red-500 font-medium">{teamStats.losses}敗</span>
             </div>
           </div>
         </Card>
@@ -353,22 +358,7 @@ export function TeamStats({ userId, opponentId, globalPeriod }: TeamStatsProps) 
           </div>
         </Card>
 
-        <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
-          <div className="p-6">
-            <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-3">
-              <div className="text-white font-bold text-lg">試</div>
-            </div>
-            <div className="text-3xl font-bold text-gray-800 mb-1">
-              {teamStats.totalMatches}
-            </div>
-            <div className="text-sm font-medium text-gray-600">総試合数</div>
-            <div className="text-xs text-gray-500 mt-2">
-              <span className="text-green-600 font-medium">{teamStats.wins}勝</span> 
-              <span className="text-gray-500 mx-1">{teamStats.draws}分</span> 
-              <span className="text-red-500 font-medium">{teamStats.losses}敗</span>
-            </div>
-          </div>
-        </Card>
+
       </div>
 
       {/* 勝率推移グラフ */}
