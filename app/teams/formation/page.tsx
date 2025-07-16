@@ -246,6 +246,10 @@ export default function FormationPage() {
       if (selectedPosition && currentFormation && insertedPlayer) {
         await handleAssignPlayer(insertedPlayer.id)
       }
+      // 通常の選手追加でフィールドが満員の場合、自動的にベンチに追加
+      else if (currentFormation && insertedPlayer && getFieldPlayers().length >= 11) {
+        await handleAddToBench(insertedPlayer.id)
+      }
 
       setNewPlayer({ name: '', number: '' })
       setShowAddPlayer(false)

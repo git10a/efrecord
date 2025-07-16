@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Trophy, Target, TrendingUp, Plus, LogOut, Activity, Flame, CloudRain } from 'lucide-react'
+import { Trophy, Target, TrendingUp, Plus, LogOut, Activity, Flame, CloudRain, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -136,6 +136,41 @@ export default function Dashboard({ userId }: DashboardProps) {
       
       if (error) throw error
       return data
+    }
+  })
+
+  // 得点選手ランキングを取得
+  const { data: topScorers } = useQuery({
+    queryKey: ['topScorers', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('match_goals')
+        .select(`
+          player_id,
+          player:players(name, number)
+        `)
+        .eq('players.user_id', userId)
+      
+      if (error) throw error
+      
+      // 得点を集計
+      const goalCounts: { [key: string]: { player_id: string; player_name: string; player_number: number | null; count: number } } = {}
+      data?.forEach((goal: any) => {
+        const playerId = goal.player_id
+        const playerName = goal.player?.name || 'Unknown'
+        const playerNumber = goal.player?.number || null
+        
+        if (goalCounts[playerId]) {
+          goalCounts[playerId].count++
+        } else {
+          goalCounts[playerId] = { player_id: playerId, player_name: playerName, player_number: playerNumber, count: 1 }
+        }
+      })
+      
+      // 得点数で降順ソートして上位5位まで
+      return Object.values(goalCounts)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5)
     }
   })
 
@@ -358,7 +393,12 @@ export default function Dashboard({ userId }: DashboardProps) {
               </div>
               <div className="text-sm font-medium text-gray-600 mb-1">勝率</div>
               <div className="text-xs text-gray-500">
-                直近10試合: {recent10WinRate}%
+                直近10試合: {recent10WinRate}% | 総試合数: {userStats?.total_matches || 0}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                <span className="text-green-600 font-medium">{userStats?.total_wins || 0}勝</span> 
+                <span className="text-gray-500 mx-1">{userStats?.total_draws || 0}分</span> 
+                <span className="text-red-500 font-medium">{userStats?.total_losses || 0}敗</span>
               </div>
             </div>
           </Card>
@@ -378,20 +418,50 @@ export default function Dashboard({ userId }: DashboardProps) {
             </div>
           </Card>
           
-          <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
+          <Card className="bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
             <div className="p-6">
-              <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                <div className="text-white font-bold text-lg">試</div>
+              <div className="flex items-center justify-center mb-3">
+                <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-white" />
+                </div>
               </div>
-              <div className="text-3xl font-bold text-gray-800 mb-1">
-                {userStats?.total_matches || 0}
-              </div>
-              <div className="text-sm font-medium text-gray-600">総試合数</div>
-              <div className="text-xs text-gray-500 mt-2">
-                <span className="text-green-600 font-medium">{userStats?.total_wins || 0}勝</span> 
-                <span className="text-gray-500 mx-1">{userStats?.total_draws || 0}分</span> 
-                <span className="text-red-500 font-medium">{userStats?.total_losses || 0}敗</span>
-              </div>
+              <div className="text-sm font-medium text-gray-600 mb-3 text-center">得点ランキング</div>
+              
+              {topScorers && topScorers.length > 0 ? (
+                <div className="space-y-2">
+                  {topScorers.map((scorer, index) => {
+                    const maxGoals = topScorers[0]?.count || 1
+                    const barWidth = (scorer.count / maxGoals) * 100
+                    
+                    return (
+                      <div key={scorer.player_id} className="flex items-center gap-2">
+                        <div className="text-xs font-medium text-gray-600 w-4">{index + 1}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-xs font-medium truncate">
+                              {scorer.player_name}
+                              {scorer.player_number && (
+                                <span className="text-gray-500"> #{scorer.player_number}</span>
+                              )}
+                            </div>
+                            <div className="text-xs font-bold text-purple-600">{scorer.count}</div>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-1.5">
+                            <div 
+                              className="bg-purple-600 h-1.5 rounded-full transition-all duration-300" 
+                              style={{ width: `${barWidth}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 text-xs">
+                  得点記録がありません
+                </div>
+              )}
             </div>
           </Card>
         </div>
