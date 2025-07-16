@@ -443,9 +443,9 @@ export default function FormationPage() {
   const handlePositionUpdate = async (positionId: string, x: number, y: number) => {
     try {
       const supabase = createClient()
-      // ピッチサイズに合わせて座標を制限
-      const clampedX = Math.max(0, Math.min(336, x)) // 400 - 64 (カードサイズ)
-      const clampedY = Math.max(0, Math.min(320, y)) // 384 - 64 (カードサイズ)
+      // ピッチサイズに合わせて座標を制限し、整数に変換
+      const clampedX = Math.round(Math.max(0, Math.min(336, x))) // 400 - 64 (カードサイズ)
+      const clampedY = Math.round(Math.max(0, Math.min(320, y))) // 384 - 64 (カードサイズ)
       
       const { error } = await supabase
         .from('formation_positions')
