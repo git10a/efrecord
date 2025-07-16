@@ -27,6 +27,7 @@ function MatchesContent() {
   const [page, setPage] = useState(0)
   const [opponentName, setOpponentName] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [globalPeriod, setGlobalPeriod] = useState<PeriodFilter>('all')
   const router = useRouter()
   const searchParams = useSearchParams()
   const opponentId = searchParams.get('opponent')
