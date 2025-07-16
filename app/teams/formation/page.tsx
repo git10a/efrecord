@@ -1074,20 +1074,20 @@ export default function FormationPage() {
 
           {/* 右側: フォーメーション表示 */}
           <div className="flex-1 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {currentFormation ? `${currentFormation.name} (${currentFormation.formation_pattern})` : 'フォーメーション'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* dnd-kitのDndContextで囲む */}
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
-                >
+            {/* 全体をDndContextで囲む */}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    {currentFormation ? `${currentFormation.name} (${currentFormation.formation_pattern})` : 'フォーメーション'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                   <DroppableArea>
                     {/* ピッチのライン */}
                     <div className="absolute inset-0 border-2 border-white opacity-30"></div>
@@ -1143,53 +1143,20 @@ export default function FormationPage() {
                         ))
                     }
                   </DroppableArea>
-                  
-                  {/* ドラッグオーバーレイ */}
-                  <DragOverlay>
-                    {draggedPlayer ? (
-                      <div
-                        style={{
-                          width: '4rem',
-                          height: '4rem',
-                          background: 'white',
-                          border: '2px solid #3b82f6',
-                          borderRadius: '0.5rem',
-                          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.75rem',
-                          cursor: 'grabbing',
-                          zIndex: 1000,
-                        }}
-                      >
-                        <div className="font-bold text-center text-xs truncate w-full px-1">{draggedPlayer.player.name}</div>
-                        <div className="text-gray-500 text-xs">{draggedPlayer.display_position}</div>
-                      </div>
-                    ) : null}
-                  </DragOverlay>
-                </DndContext>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             
-            {/* ベンチセクション */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>ベンチ ({getBenchPlayers().length}人)</span>
-                  <div className="text-sm text-gray-500">
-                    フィールド: {getFieldPlayers().length}/11人
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
-                >
+              {/* ベンチセクション */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>ベンチ ({getBenchPlayers().length}人)</span>
+                    <div className="text-sm text-gray-500">
+                      フィールド: {getFieldPlayers().length}/11人
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                   <DroppableBench>
                     {getBenchPlayers().map((position) => (
                       <DraggablePlayerCard
@@ -1207,35 +1174,35 @@ export default function FormationPage() {
                       </div>
                     )}
                   </DroppableBench>
-                  
-                  {/* ドラッグオーバーレイ */}
-                  <DragOverlay>
-                    {draggedPlayer ? (
-                      <div
-                        style={{
-                          width: '4rem',
-                          height: '4rem',
-                          background: 'white',
-                          border: '2px solid #3b82f6',
-                          borderRadius: '0.5rem',
-                          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.75rem',
-                          cursor: 'grabbing',
-                          zIndex: 1000,
-                        }}
-                      >
-                        <div className="font-bold text-center text-xs truncate w-full px-1">{draggedPlayer.player.name}</div>
-                        <div className="text-gray-500 text-xs">{draggedPlayer.display_position}</div>
-                      </div>
-                    ) : null}
-                  </DragOverlay>
-                </DndContext>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+              
+              {/* ドラッグオーバーレイ */}
+              <DragOverlay>
+                {draggedPlayer ? (
+                  <div
+                    style={{
+                      width: '4rem',
+                      height: '4rem',
+                      background: 'white',
+                      border: '2px solid #3b82f6',
+                      borderRadius: '0.5rem',
+                      boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.75rem',
+                      cursor: 'grabbing',
+                      zIndex: 1000,
+                    }}
+                  >
+                    <div className="font-bold text-center text-xs truncate w-full px-1">{draggedPlayer.player.name}</div>
+                    <div className="text-gray-500 text-xs">{draggedPlayer.display_position}</div>
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
           </div>
         </div>
 
