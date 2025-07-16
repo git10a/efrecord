@@ -157,7 +157,7 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
     } catch (err) {
       console.error('Error fetching formation positions:', err)
     }
-  }, [])
+  }, [setFormationPositions])
 
   const fetchExistingGoals = useCallback(async () => {
     if (!matchId) return

@@ -78,12 +78,26 @@ export default function NewMatchPage() {
     }
   }, [])
 
-  useEffect(() => {
-    fetchOpponents()
-    fetchFormations()
-  }, [fetchOpponents])
+  const fetchFormationPositions = useCallback(async (formationId: string) => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('formation_positions')
+        .select(`
+          *,
+          player:players(*)
+        `)
+        .eq('formation_id', formationId)
 
-  const fetchFormations = async () => {
+      if (error) throw error
+      setFormationPositions(data || [])
+    } catch (err) {
+      console.error('Error fetching formation positions:', err)
+      setError('フォーメーション配置の取得に失敗しました')
+    }
+  }, [setFormationPositions, setError])
+
+  const fetchFormations = useCallback(async () => {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -112,26 +126,12 @@ export default function NewMatchPage() {
       console.error('Error fetching formations:', err)
       setError('フォーメーションの取得に失敗しました')
     }
-  }
+  }, [fetchFormationPositions, setFormations, setCurrentFormation, setError])
 
-  const fetchFormationPositions = async (formationId: string) => {
-    try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('formation_positions')
-        .select(`
-          *,
-          player:players(*)
-        `)
-        .eq('formation_id', formationId)
-
-      if (error) throw error
-      setFormationPositions(data || [])
-    } catch (err) {
-      console.error('Error fetching formation positions:', err)
-      setError('フォーメーション配置の取得に失敗しました')
-    }
-  }
+  useEffect(() => {
+    fetchOpponents()
+    fetchFormations()
+  }, [fetchOpponents, fetchFormations])
 
   const handleFormationChange = async (formationId: string) => {
     const formation = formations.find(f => f.id === formationId)

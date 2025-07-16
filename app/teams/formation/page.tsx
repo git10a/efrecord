@@ -117,6 +117,9 @@ export default function FormationPage() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [draggedPlayer, setDraggedPlayer] = useState<FormationPosition | null>(null)
   
+  // デバウンス用のタイマー
+  const [updateTimer, setUpdateTimer] = useState<NodeJS.Timeout | null>(null)
+  
   // センサーの設定
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -478,9 +481,6 @@ export default function FormationPage() {
     }
   }
 
-  // デバウンス用のタイマー
-  const [updateTimer, setUpdateTimer] = useState<NodeJS.Timeout | null>(null)
-  
   const handlePositionUpdate = (positionId: string, x: number, y: number) => {
     // ピッチサイズに合わせて座標を制限し、整数に変換
     const clampedX = Math.round(Math.max(0, Math.min(336, x))) // 400 - 64 (カードサイズ)
