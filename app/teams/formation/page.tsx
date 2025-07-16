@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { PageLayout } from '@/components/layout/page-layout'
-import { Plus, Edit2, Trash2, Save, X, ArrowLeft } from 'lucide-react'
+import { Plus, Edit2, Trash2 } from 'lucide-react'
 
 interface Player {
   id: string
