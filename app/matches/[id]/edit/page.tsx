@@ -205,7 +205,7 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
       fetchFormations()
       fetchExistingGoals()
     }
-  }, [matchId, fetchMatch, fetchOpponents])
+  }, [matchId, fetchMatch, fetchOpponents, fetchFormations, fetchExistingGoals])
 
   const handleFormationChange = async (formationId: string) => {
     const formation = formations.find(f => f.id === formationId)

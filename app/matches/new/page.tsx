@@ -65,7 +65,7 @@ export default function NewMatchPage() {
   useEffect(() => {
     fetchOpponents()
     fetchFormations()
-  }, [])
+  }, []) // fetchOpponentsとfetchFormationsは関数なので、依存配列は空のまま
 
   const fetchOpponents = async () => {
     try {

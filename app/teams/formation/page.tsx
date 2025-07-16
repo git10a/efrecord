@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation'
 import {
   DndContext,
   useDraggable,
-  useDroppable,
   closestCenter,
   DragEndEvent,
 } from '@dnd-kit/core'
@@ -347,7 +346,6 @@ export default function FormationPage() {
 
       // まず、同じポジション（GK, DF, MF, FW）の選手をできるだけ同じポジションに配置
       for (const existingPos of (existingPositions || [])) {
-        const player = existingPos.player
         const matchingNewPos = newPattern.find((pos, idx) => 
           pos.display_position === existingPos.display_position && 
           !usedPositions.has(idx)
@@ -472,9 +470,8 @@ export default function FormationPage() {
   }
 
   // dnd-kit用のドラッグ可能な選手カードコンポーネントを追加
-  function DraggablePlayerCard({ position, onPositionUpdate }: {
-    position: FormationPosition,
-    onPositionUpdate: (id: string, x: number, y: number) => void
+  function DraggablePlayerCard({ position }: {
+    position: FormationPosition
   }) {
     // dnd-kitのuseDraggableフックを使う
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
@@ -800,7 +797,6 @@ export default function FormationPage() {
                             <DraggablePlayerCard
                               key={assignedPosition.id}
                               position={assignedPosition}
-                              onPositionUpdate={handlePositionUpdate}
                             />
                           )
                         } else {
