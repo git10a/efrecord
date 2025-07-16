@@ -27,6 +27,7 @@ function MatchesContent() {
   const [page, setPage] = useState(0)
   const [opponentName, setOpponentName] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [globalPeriod, setGlobalPeriod] = useState<PeriodFilter>('all')
   const router = useRouter()
   const searchParams = useSearchParams()
   const opponentId = searchParams.get('opponent')
@@ -115,13 +116,41 @@ function MatchesContent() {
   return (
     <PageLayout title={opponentName ? `vs ${opponentName} の対戦履歴` : '過去の戦績'}>
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* 期間フィルター（特定のチームが選択されている場合のみ表示） */}
+        {opponentId && opponentName && userId && (
+          <div className="mb-6">
+            <div className="flex items-center justify-center">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <span>期間フィルター:</span>
+                </div>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {(['all', '1month', '1week', '3days', 'today'] as PeriodFilter[]).map((period) => (
+                    <button
+                      key={period}
+                      onClick={() => setGlobalPeriod(period)}
+                      className={`px-3 py-1.5 text-sm rounded-md transition-colors font-medium ${
+                        globalPeriod === period
+                          ? 'bg-blue-500 text-white shadow-sm'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {getPeriodLabel(period)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* チーム別統計（特定のチームが選択されている場合のみ表示） */}
         {opponentId && opponentName && userId && (
           <TeamStats 
             userId={userId}
             opponentId={opponentId}
             teamName={opponentName}
-            globalPeriod="all"
+            globalPeriod={globalPeriod}
           />
         )}
 

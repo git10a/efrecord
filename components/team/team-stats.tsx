@@ -285,6 +285,21 @@ export function TeamStats({ userId, opponentId, globalPeriod }: TeamStatsProps) 
     <div className="space-y-6">
       {/* チーム別統計カード */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
+          <div className="p-6">
+            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            <div className="text-3xl font-bold text-gray-800 mb-1">
+              {winRate}%
+            </div>
+            <div className="text-sm font-medium text-gray-600 mb-1">勝率</div>
+            <div className="text-xs text-gray-500">
+              直近10試合: {Math.round(teamStats.recentWinRate)}%
+            </div>
+          </div>
+        </Card>
+
         <Card className="bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
           <div className="p-6">
             <div className="flex items-center justify-center mb-3">
@@ -319,21 +334,6 @@ export function TeamStats({ userId, opponentId, globalPeriod }: TeamStatsProps) 
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
-          <div className="p-6">
-            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Target className="w-6 h-6 text-white" />
-            </div>
-            <div className="text-3xl font-bold text-gray-800 mb-1">
-              {winRate}%
-            </div>
-            <div className="text-sm font-medium text-gray-600 mb-1">勝率</div>
-            <div className="text-xs text-gray-500">
-              直近10試合: {Math.round(teamStats.recentWinRate)}%
             </div>
           </div>
         </Card>
