@@ -443,15 +443,28 @@ export default function FormationPage() {
   const handlePositionUpdate = async (positionId: string, x: number, y: number) => {
     try {
       const supabase = createClient()
+      // ピッチサイズに合わせて座標を制限
+      const clampedX = Math.max(0, Math.min(336, x)) // 400 - 64 (カードサイズ)
+      const clampedY = Math.max(0, Math.min(320, y)) // 384 - 64 (カードサイズ)
+      
       const { error } = await supabase
         .from('formation_positions')
         .update({
-          position_x: Math.max(0, Math.min(100, x)),
-          position_y: Math.max(0, Math.min(100, y))
+          position_x: clampedX,
+          position_y: clampedY
         })
         .eq('id', positionId)
 
       if (error) throw error
+      
+      // 成功時にローカル状態も更新
+      setFormationPositions(prev => 
+        prev.map(fp => 
+          fp.id === positionId 
+            ? { ...fp, position_x: clampedX, position_y: clampedY }
+            : fp
+        )
+      )
     } catch (err) {
       console.error('Error updating position:', err)
       setError('位置の更新に失敗しました')
@@ -585,35 +598,29 @@ export default function FormationPage() {
       const position = formationPositions.find(p => p.id === active.id)
       if (!position) return
       
-      // ピッチのサイズ
-      const pitchRect = { width: 400, height: 384 }
-      
       let newX = position.position_x
       let newY = position.position_y
       
       // deltaが利用可能な場合はそれを使用
       if (event.delta) {
-        newX = Math.max(0, Math.min(pitchRect.width - 64, position.position_x + event.delta.x))
-        newY = Math.max(0, Math.min(pitchRect.height - 64, position.position_y + event.delta.y))
+        newX = position.position_x + event.delta.x
+        newY = position.position_y + event.delta.y
       }
       
-      // 位置を更新
+      // 位置を更新（handlePositionUpdate内で制限とローカル状態更新を行う）
       handlePositionUpdate(position.id, newX, newY)
-      
-      // 状態を更新
-      setFormationPositions(prev => 
-        prev.map(fp => 
-          fp.id === position.id 
-            ? { ...fp, position_x: newX, position_y: newY }
-            : fp
-        )
-      )
     }
   }
 
   // 選手割り当て処理を追加
   const handleAssignPlayer = async (playerId: string) => {
     if (!selectedPosition || !currentFormation) return
+    
+    // 11人制限チェック
+    if (getFieldPlayers().length >= 11) {
+      setError('フィールドには最大11人まで配置できます。12人目以降はベンチになります。')
+      return
+    }
     
     setLoading(true)
     try {
@@ -653,11 +660,60 @@ export default function FormationPage() {
       setLoading(false)
     }
   }
+  
+  // ベンチに選手を追加
+  const handleAddToBench = async (playerId: string) => {
+    if (!currentFormation) return
+    
+    setLoading(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) return
 
+      // ベンチに配置（フィールド外の座標）
+      const { error } = await supabase
+        .from('formation_positions')
+        .insert({
+          formation_id: currentFormation.id,
+          player_id: playerId,
+          position_x: -100, // フィールド外の座標
+          position_y: -100,
+          display_position: 'BENCH'
+        })
+
+      if (error) throw error
+
+      setSelectedPosition(null)
+      setShowPlayerAssignment(false)
+      await fetchFormationPositions(currentFormation.id)
+    } catch (err) {
+      console.error('Error adding to bench:', err)
+      setError('ベンチへの追加に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // フィールドプレイヤー（11人）とベンチプレイヤーを取得
+  const getFieldPlayers = () => {
+    return formationPositions.filter(fp => fp.position_x >= 0 && fp.position_y >= 0)
+  }
+  
+  const getBenchPlayers = () => {
+    return formationPositions.filter(fp => fp.position_x < 0 || fp.position_y < 0)
+  }
+  
   // 未割り当て選手を取得
   const getUnassignedPlayers = () => {
     const assignedPlayerIds = formationPositions.map(fp => fp.player_id)
     return players.filter(player => !assignedPlayerIds.includes(player.id))
+  }
+  
+  // フィールドに配置可能かチェック
+  const canAddToField = () => {
+    return getFieldPlayers().length < 11
   }
 
   // 空カードのクリック処理を追加
@@ -858,7 +914,7 @@ export default function FormationPage() {
           </div>
 
           {/* 右側: フォーメーション表示 */}
-          <div className="flex-1">
+          <div className="flex-1 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>
@@ -931,8 +987,8 @@ export default function FormationPage() {
                       })
                     }
                     
-                    {/* パターン外の選手を表示 */}
-                    {formationPositions
+                    {/* パターン外のフィールドプレイヤーを表示 */}
+                    {getFieldPlayers()
                       .filter(position => {
                         // パターン内にない選手のみを表示
                         const pattern = FORMATION_PATTERNS[currentFormation?.formation_pattern || '']
@@ -977,12 +1033,60 @@ export default function FormationPage() {
                 </DndContext>
               </CardContent>
             </Card>
+            
+            {/* ベンチセクション */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>ベンチ ({getBenchPlayers().length}人)</span>
+                  <div className="text-sm text-gray-500">
+                    フィールド: {getFieldPlayers().length}/11人
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-3">
+                  {getBenchPlayers().map((position) => (
+                    <div
+                      key={position.id}
+                      className="p-3 border border-gray-200 rounded-lg bg-gray-50 text-center"
+                    >
+                      <div className="font-medium text-sm">{position.player.name}</div>
+                      <div className="text-xs text-gray-500">
+                        {position.player.position} {position.player.number && `#${position.player.number}`}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-2 text-xs"
+                        onClick={async () => {
+                          if (!currentFormation) return
+                          const supabase = createClient()
+                          await supabase
+                            .from('formation_positions')
+                            .delete()
+                            .eq('id', position.id)
+                          await fetchFormationPositions(currentFormation.id)
+                        }}
+                      >
+                        削除
+                      </Button>
+                    </div>
+                  ))}
+                  {getBenchPlayers().length === 0 && (
+                    <div className="col-span-4 text-center text-gray-500 py-8">
+                      ベンチに選手がいません
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
         {/* 選手編集モーダル */}
         {editingPlayer && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg w-96">
               <h3 className="text-lg font-bold mb-4">選手編集</h3>
               <div className="space-y-3">
@@ -1021,7 +1125,7 @@ export default function FormationPage() {
         )}
 
         {showPlayerAssignment && selectedPosition && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg w-96 max-h-[80vh] overflow-y-auto">
               <h3 className="text-lg font-bold mb-4">
                 {selectedPosition.display_position} に選手を割り当て
@@ -1088,12 +1192,31 @@ export default function FormationPage() {
                 {getUnassignedPlayers().map((player) => (
                   <div
                     key={player.id}
-                    className="p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
-                    onClick={() => handleAssignPlayer(player.id)}
+                    className="p-3 border border-gray-200 rounded-lg"
                   >
-                    <div className="font-medium">{player.name}</div>
-                    <div className="text-sm text-gray-500">
-                      {player.position} {player.number && `#${player.number}`}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">{player.name}</div>
+                        <div className="text-sm text-gray-500">
+                          {player.position} {player.number && `#${player.number}`}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleAssignPlayer(player.id)}
+                          disabled={!canAddToField()}
+                        >
+                          フィールド
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleAddToBench(player.id)}
+                        >
+                          ベンチ
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1104,6 +1227,12 @@ export default function FormationPage() {
                   </div>
                 )}
               </div>
+              
+              {!canAddToField() && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                  フィールドは11人で満員です。新しい選手はベンチに追加されます。
+                </div>
+              )}
               <div className="mt-4 flex justify-end">
                 <Button
                   variant="outline"
