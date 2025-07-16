@@ -317,65 +317,69 @@ export default function Dashboard({ userId }: DashboardProps) {
         </div>
 
         {/* 統計カード */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
-            <div className="p-6">
-              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Target className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-3xl font-bold text-gray-800 mb-1">
-                {winRate}%
-              </div>
-              <div className="text-sm font-medium text-gray-600 mb-1">勝率</div>
-              <div className="text-xs text-gray-500">
-                直近10試合: {recent10WinRate}% | 総試合数: {userStats?.total_matches || 0}
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                <span className="text-green-600 font-medium">{userStats?.total_wins || 0}勝</span> 
-                <span className="text-gray-500 mx-1">{userStats?.total_draws || 0}分</span> 
-                <span className="text-red-500 font-medium">{userStats?.total_losses || 0}敗</span>
-              </div>
-            </div>
-          </Card>
-          
-          <Card className="bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
-            <div className="p-6">
-              <div className="flex items-center justify-center mb-3">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                  <Activity className="w-6 h-6 text-white" />
+        <div className="space-y-4 mb-8">
+          {/* 勝率と得失点を2列で表示 */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
+              <div className="p-6">
+                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Target className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-3xl font-bold text-gray-800 mb-1">
+                  {winRate}%
+                </div>
+                <div className="text-sm font-medium text-gray-600 mb-1">勝率</div>
+                <div className="text-xs text-gray-500">
+                  直近10試合: {recent10WinRate}% | 総試合数: {userStats?.total_matches || 0}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  <span className="text-green-600 font-medium">{userStats?.total_wins || 0}勝</span> 
+                  <span className="text-gray-500 mx-1">{userStats?.total_draws || 0}分</span> 
+                  <span className="text-red-500 font-medium">{userStats?.total_losses || 0}敗</span>
                 </div>
               </div>
-              <div className="text-sm font-medium text-gray-600 mb-4 text-center">得失点</div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-center gap-4">
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-green-600">{totalPointsScored}</div>
-                    <div className="text-xs text-gray-500">合計得点</div>
-                  </div>
-                  <div className="text-gray-300">|</div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-red-600">{totalPointsConceded}</div>
-                    <div className="text-xs text-gray-500">合計失点</div>
+            </Card>
+            
+            <Card className="bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
+              <div className="p-6">
+                <div className="flex items-center justify-center mb-3">
+                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                    <Activity className="w-6 h-6 text-white" />
                   </div>
                 </div>
-                <div className="border-t border-gray-100 pt-2">
+                <div className="text-sm font-medium text-gray-600 mb-4 text-center">得失点</div>
+                
+                <div className="space-y-3">
                   <div className="flex items-center justify-center gap-4">
                     <div className="text-center">
-                      <div className="text-lg font-semibold text-green-600">{averagePointsScored}</div>
-                      <div className="text-xs text-gray-500">平均得点</div>
+                      <div className="text-xl font-bold text-green-600">{totalPointsScored}</div>
+                      <div className="text-xs text-gray-500">合計得点</div>
                     </div>
                     <div className="text-gray-300">|</div>
                     <div className="text-center">
-                      <div className="text-lg font-semibold text-red-600">{averagePointsConceded}</div>
-                      <div className="text-xs text-gray-500">平均失点</div>
+                      <div className="text-xl font-bold text-red-600">{totalPointsConceded}</div>
+                      <div className="text-xs text-gray-500">合計失点</div>
+                    </div>
+                  </div>
+                  <div className="border-t border-gray-100 pt-2">
+                    <div className="flex items-center justify-center gap-4">
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-green-600">{averagePointsScored}</div>
+                        <div className="text-xs text-gray-500">平均得点</div>
+                      </div>
+                      <div className="text-gray-300">|</div>
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-red-600">{averagePointsConceded}</div>
+                        <div className="text-xs text-gray-500">平均失点</div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Card>
-          
+            </Card>
+          </div>
+
+          {/* 連勝連敗を横幅いっぱいで表示 */}
           <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
             <div className="p-6">
               <div className={`w-12 h-12 ${getStreakBackground(userStats?.current_streak || 0)} rounded-full flex items-center justify-center mx-auto mb-3`}>
@@ -390,7 +394,6 @@ export default function Dashboard({ userId }: DashboardProps) {
               <div className="text-sm font-medium text-gray-600">現在の連勝/連敗</div>
             </div>
           </Card>
-          
         </div>
 
         {/* 最近の試合 */}
