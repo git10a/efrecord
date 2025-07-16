@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Trophy, Target, TrendingUp, Plus, LogOut, Activity, Flame, CloudRain, Zap, Wind, Droplets, CloudLightning } from 'lucide-react'
 import Link from 'next/link'
