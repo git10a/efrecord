@@ -571,8 +571,9 @@ export default function FormationPage() {
   }
 
   // dnd-kit用のドラッグ可能な選手カードコンポーネントを追加
-  function DraggablePlayerCard({ position }: {
+  function DraggablePlayerCard({ position, isOnBench = false }: {
     position: FormationPosition
+    isOnBench?: boolean
   }) {
     // dnd-kitのuseDraggableフックを使う
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -580,10 +581,39 @@ export default function FormationPage() {
       data: {
         type: 'player',
         position: position,
+        isOnBench,
       },
     })
     
-    // transformで現在の位置を反映
+    // ベンチ用のスタイル
+    if (isOnBench) {
+      const style = {
+        width: '100%',
+        padding: '0.75rem',
+        border: '2px solid #d1d5db',
+        borderRadius: '0.5rem',
+        background: 'white',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+        display: 'flex',
+        flexDirection: 'column' as const,
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: isDragging ? 'grabbing' : 'grab',
+        opacity: isDragging ? 0.5 : 1,
+        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+      }
+      
+      return (
+        <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+          <div className="font-medium text-sm text-center">{position.player.name}</div>
+          <div className="text-xs text-gray-500">
+            {position.player.number && `#${position.player.number}`}
+          </div>
+        </div>
+      )
+    }
+    
+    // フィールド用のスタイル
     const style = {
       position: 'absolute' as const,
       left: `${position.position_x}px`,
@@ -625,6 +655,24 @@ export default function FormationPage() {
       </div>
     )
   }
+  
+  // ベンチドロップエリアコンポーネント
+  function DroppableBench({ children }: { children: React.ReactNode }) {
+    const { setNodeRef, isOver } = useDroppable({
+      id: 'bench',
+    })
+    
+    return (
+      <div 
+        ref={setNodeRef} 
+        className={`grid grid-cols-4 gap-3 p-4 rounded-lg transition-colors ${
+          isOver ? 'bg-blue-50 border-2 border-blue-300' : 'bg-gray-50 border-2 border-transparent'
+        }`}
+      >
+        {children}
+      </div>
+    )
+  }
 
   // ドラッグ開始時の処理
   function handleDragStart(event: DragStartEvent) {
@@ -638,7 +686,7 @@ export default function FormationPage() {
   }
 
   // ドラッグ終了時の処理を追加
-  function handleDragEnd(event: DragEndEvent) {
+  async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     
     setActiveId(null)
@@ -646,34 +694,67 @@ export default function FormationPage() {
     
     if (!over) return
     
-    // ピッチ上でドロップされた場合
-    if (over.id === 'pitch') {
-      const position = formationPositions.find(p => p.id === active.id)
-      if (!position) return
-      
-      let newX = position.position_x
-      let newY = position.position_y
-      
-      // deltaが利用可能な場合はそれを使用
-      if (event.delta) {
-        newX = position.position_x + event.delta.x
-        newY = position.position_y + event.delta.y
+    const position = formationPositions.find(p => p.id === active.id)
+    if (!position) return
+    
+    const supabase = createClient()
+    
+    try {
+      // ピッチ上でドロップされた場合
+      if (over.id === 'pitch') {
+        // フィールドが満員でベンチから移動する場合はチェック
+        const isFromBench = position.position_x < 0 || position.position_y < 0
+        if (isFromBench && getFieldPlayers().length >= 11) {
+          setError('フィールドには最大11人までしか配置できません')
+          return
+        }
+        
+        let newX = position.position_x
+        let newY = position.position_y
+        
+        // deltaが利用可能な場合はそれを使用
+        if (event.delta) {
+          newX = position.position_x + event.delta.x
+          newY = position.position_y + event.delta.y
+        }
+        
+        // ベンチからフィールドへの移動の場合は中央に配置
+        if (isFromBench) {
+          newX = 200
+          newY = 200
+        }
+        
+        // 位置を更新（handlePositionUpdate内で制限とローカル状態更新を行う）
+        handlePositionUpdate(position.id, newX, newY)
       }
-      
-      // 位置を更新（handlePositionUpdate内で制限とローカル状態更新を行う）
-      handlePositionUpdate(position.id, newX, newY)
+      // ベンチ上でドロップされた場合
+      else if (over.id === 'bench') {
+        // フィールドからベンチに移動
+        const { error } = await supabase
+          .from('formation_positions')
+          .update({
+            position_x: -100,
+            position_y: -100,
+            display_position: 'BENCH'
+          })
+          .eq('id', position.id)
+
+        if (error) throw error
+        
+        // フォーメーション位置を再取得
+        if (currentFormation) {
+          await fetchFormationPositions(currentFormation.id)
+        }
+      }
+    } catch (err) {
+      console.error('Error handling drag end:', err)
+      setError('選手の移動に失敗しました')
     }
   }
 
   // 選手割り当て処理を追加
   const handleAssignPlayer = async (playerId: string) => {
     if (!selectedPosition || !currentFormation) return
-    
-    // 11人制限チェック
-    if (getFieldPlayers().length >= 11) {
-      setError('フィールドには最大11人まで配置できます。12人目以降はベンチになります。')
-      return
-    }
     
     setLoading(true)
     try {
@@ -682,13 +763,38 @@ export default function FormationPage() {
       
       if (!user) return
 
-      // 既存の同じ位置の割り当てを削除
-      await supabase
-        .from('formation_positions')
-        .delete()
-        .eq('formation_id', currentFormation.id)
-        .eq('position_x', selectedPosition.x)
-        .eq('position_y', selectedPosition.y)
+      // 11人制限チェック - フィールドが満員の場合は自動的にベンチに送る
+      if (getFieldPlayers().length >= 11) {
+        setError('フィールドには最大11人しか配置できません。自動的にベンチに追加します。')
+        await handleAddToBench(playerId)
+        return
+      }
+
+      // 既存の選手がその位置に割り当てられているかチェック
+      const existingAtPosition = formationPositions.find(fp => 
+        fp.position_x === selectedPosition.x && fp.position_y === selectedPosition.y
+      )
+      
+      if (existingAtPosition) {
+        // 既存の選手を自動的にベンチに移動
+        await supabase
+          .from('formation_positions')
+          .update({
+            position_x: -100,
+            position_y: -100,
+            display_position: 'BENCH'
+          })
+          .eq('id', existingAtPosition.id)
+      }
+
+      // 既に選手が別の位置に割り当てられている場合は削除
+      const existingPosition = formationPositions.find(fp => fp.player_id === playerId)
+      if (existingPosition) {
+        await supabase
+          .from('formation_positions')
+          .delete()
+          .eq('id', existingPosition.id)
+      }
 
       // 新しい割り当てを追加
       const { error } = await supabase
@@ -1078,40 +1184,56 @@ export default function FormationPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-4 gap-3">
-                  {getBenchPlayers().map((position) => (
-                    <div
-                      key={position.id}
-                      className="p-3 border border-gray-200 rounded-lg bg-gray-50 text-center"
-                    >
-                      <div className="font-medium text-sm">{position.player.name}</div>
-                      <div className="text-xs text-gray-500">
-                        {position.player.number && `#${position.player.number}`}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                >
+                  <DroppableBench>
+                    {getBenchPlayers().map((position) => (
+                      <DraggablePlayerCard
+                        key={position.id}
+                        position={position}
+                        isOnBench={true}
+                      />
+                    ))}
+                    {getBenchPlayers().length === 0 && (
+                      <div className="col-span-4 text-center text-gray-500 py-8">
+                        ベンチに選手がいません
+                        <div className="text-xs mt-2">
+                          フィールドから選手をドラッグしてベンチに追加できます
+                        </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="mt-2 text-xs"
-                        onClick={async () => {
-                          if (!currentFormation) return
-                          const supabase = createClient()
-                          await supabase
-                            .from('formation_positions')
-                            .delete()
-                            .eq('id', position.id)
-                          await fetchFormationPositions(currentFormation.id)
+                    )}
+                  </DroppableBench>
+                  
+                  {/* ドラッグオーバーレイ */}
+                  <DragOverlay>
+                    {draggedPlayer ? (
+                      <div
+                        style={{
+                          width: '4rem',
+                          height: '4rem',
+                          background: 'white',
+                          border: '2px solid #3b82f6',
+                          borderRadius: '0.5rem',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          cursor: 'grabbing',
+                          zIndex: 1000,
                         }}
                       >
-                        削除
-                      </Button>
-                    </div>
-                  ))}
-                  {getBenchPlayers().length === 0 && (
-                    <div className="col-span-4 text-center text-gray-500 py-8">
-                      ベンチに選手がいません
-                    </div>
-                  )}
-                </div>
+                        <div className="font-bold text-center text-xs truncate w-full px-1">{draggedPlayer.player.name}</div>
+                        <div className="text-gray-500 text-xs">{draggedPlayer.display_position}</div>
+                      </div>
+                    ) : null}
+                  </DragOverlay>
+                </DndContext>
               </CardContent>
             </Card>
           </div>
