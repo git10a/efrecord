@@ -43,10 +43,11 @@ export default function TeamsPage() {
         return
       }
 
+      // 自分以外の全チームを取得（対戦相手として表示）
       const { data, error } = await supabase
         .from('opponents')
         .select('*')
-        .eq('created_by', user.id)
+        .neq('created_by', user.id)
         .order('name')
 
       if (error) throw error
@@ -349,12 +350,12 @@ export default function TeamsPage() {
           </CardContent>
         </Card>
 
-        {/* チーム一覧 */}
+        {/* 対戦相手チーム一覧 */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-blue-600" />
-              チーム一覧
+              対戦相手チーム一覧
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -421,7 +422,7 @@ export default function TeamsPage() {
               ))}
               {teams.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
-                  チームが登録されていません
+                  対戦相手のチームが登録されていません
                 </div>
               )}
             </div>
