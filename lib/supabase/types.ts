@@ -96,6 +96,122 @@ export interface Database {
           updated_at?: string
         }
       }
+      players: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          position: 'GK' | 'DF' | 'MF' | 'FW'
+          number: number | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          position: 'GK' | 'DF' | 'MF' | 'FW'
+          number?: number | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          position?: 'GK' | 'DF' | 'MF' | 'FW'
+          number?: number | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      formations: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          formation_pattern: string
+          is_default: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          formation_pattern: string
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          formation_pattern?: string
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      formation_positions: {
+        Row: {
+          id: string
+          formation_id: string
+          player_id: string
+          position_x: number
+          position_y: number
+          display_position: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          formation_id: string
+          player_id: string
+          position_x: number
+          position_y: number
+          display_position: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          formation_id?: string
+          player_id?: string
+          position_x?: number
+          position_y?: number
+          display_position?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      match_goals: {
+        Row: {
+          id: string
+          match_id: string
+          player_id: string
+          goal_time: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          match_id: string
+          player_id: string
+          goal_time?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          match_id?: string
+          player_id?: string
+          goal_time?: number | null
+          created_at?: string
+        }
+      }
       user_stats: {
         Row: {
           user_id: string
