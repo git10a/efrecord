@@ -125,6 +125,9 @@ export default function FormationPage() {
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+        // タッチデバイスでは長押しでドラッグ開始
+        delay: typeof window !== 'undefined' && 'ontouchstart' in window ? 250 : 0,
+        tolerance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -609,8 +612,8 @@ export default function FormationPage() {
       
       return (
         <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-          <div className="font-medium text-sm text-center">{position.player.name}</div>
-          <div className="text-xs text-gray-500">
+          <div className="font-medium text-sm text-center text-gray-900">{position.player.name}</div>
+          <div className="text-xs text-gray-600">
             {position.player.number && `#${position.player.number}`}
           </div>
         </div>
@@ -623,8 +626,8 @@ export default function FormationPage() {
       left: `${position.position_x}px`,
       top: `${position.position_y}px`,
       transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-      width: '4rem',
-      height: '4rem',
+      width: '3rem',
+      height: '3rem',
       background: 'white',
       border: '2px solid #d1d5db',
       borderRadius: '0.5rem',
@@ -641,9 +644,9 @@ export default function FormationPage() {
     
     return (
       <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-        <div className="font-bold text-center text-xs truncate w-full px-1">{position.player.name}</div>
+        <div className="font-bold text-center text-xs truncate w-full px-1 text-gray-900">{position.player.name}</div>
         {position.player.number && (
-          <div className="text-gray-500 text-xs">#{position.player.number}</div>
+          <div className="text-gray-600 text-xs">#{position.player.number}</div>
         )}
       </div>
     )
@@ -656,7 +659,7 @@ export default function FormationPage() {
     })
     
     return (
-      <div ref={setNodeRef} className="relative w-full h-96 bg-green-600 rounded-lg overflow-hidden">
+      <div ref={setNodeRef} className="relative w-full h-64 sm:h-80 md:h-96 bg-green-600 rounded-lg overflow-hidden">
         {children}
       </div>
     )
@@ -671,7 +674,7 @@ export default function FormationPage() {
     return (
       <div 
         ref={setNodeRef} 
-        className={`grid grid-cols-4 gap-3 p-4 rounded-lg transition-colors ${
+        className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-4 rounded-lg transition-colors ${
           isOver ? 'bg-blue-50 border-2 border-blue-300' : 'bg-gray-50 border-2 border-transparent'
         }`}
       >
@@ -896,9 +899,9 @@ export default function FormationPage() {
           </div>
         )}
 
-        <div className="flex gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* 左側: 選手管理 */}
-          <div className="w-1/3">
+          <div className="w-full lg:w-1/3">
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -957,8 +960,8 @@ export default function FormationPage() {
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-medium">{player.name}</div>
-                          <div className="text-sm text-gray-500">
+                          <div className="font-medium text-gray-900">{player.name}</div>
+                          <div className="text-sm text-gray-600">
                             {player.number && `#${player.number}`}
                           </div>
                         </div>
@@ -1057,8 +1060,8 @@ export default function FormationPage() {
                           className="flex-1 cursor-pointer"
                           onClick={() => handleFormationChange(formation.id)}
                         >
-                          <div className="font-medium">{formation.name}</div>
-                          <div className="text-sm text-gray-500">{formation.formation_pattern}</div>
+                          <div className="font-medium text-gray-900">{formation.name}</div>
+                          <div className="text-sm text-gray-600">{formation.formation_pattern}</div>
                         </div>
                         <Button
                           size="sm"
@@ -1079,7 +1082,7 @@ export default function FormationPage() {
           </div>
 
           {/* 右側: フォーメーション表示 */}
-          <div className="flex-1 space-y-6">
+          <div className="w-full lg:flex-1 space-y-6">
             {/* 全体をDndContextで囲む */}
             <DndContext
               sensors={sensors}
@@ -1127,8 +1130,8 @@ export default function FormationPage() {
                               position: 'absolute',
                               left: `${pos.x}px`,
                               top: `${pos.y}px`,
-                              width: '4rem',
-                              height: '4rem',
+                              width: '3rem',
+                              height: '3rem',
                               background: 'white',
                               border: '2px dashed #d1d5db',
                               borderRadius: '0.5rem',
@@ -1143,8 +1146,8 @@ export default function FormationPage() {
                             }}
                             className="hover:border-blue-400 hover:bg-blue-50 transition-colors"
                           >
-                            <div className="font-bold text-gray-400">+</div>
-                            <div className="text-gray-400 text-xs">選手追加</div>
+                            <div className="font-bold text-gray-600">+</div>
+                            <div className="text-gray-600 text-xs">選手追加</div>
                           </div>
                         ))
                     }
