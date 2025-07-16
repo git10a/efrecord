@@ -143,13 +143,28 @@ export default function Dashboard({ userId }: DashboardProps) {
   const { data: topScorers } = useQuery({
     queryKey: ['topScorers', userId],
     queryFn: async () => {
+      // まずユーザーの試合を取得
+      const { data: userMatches, error: matchError } = await supabase
+        .from('matches')
+        .select('id')
+        .eq('user_id', userId)
+        
+      if (matchError) throw matchError
+      
+      if (!userMatches || userMatches.length === 0) {
+        return []
+      }
+      
+      const matchIds = userMatches.map(match => match.id)
+      
+      // ユーザーの試合での得点を取得
       const { data, error } = await supabase
         .from('match_goals')
         .select(`
           player_id,
           player:players(name, number)
         `)
-        .eq('players.user_id', userId)
+        .in('match_id', matchIds)
       
       if (error) throw error
       

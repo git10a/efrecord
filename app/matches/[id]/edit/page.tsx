@@ -144,6 +144,10 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
   const fetchFormationPositions = useCallback(async (formationId: string) => {
     try {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) return
+      
       const { data, error } = await supabase
         .from('formation_positions')
         .select(`
@@ -151,9 +155,14 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
           player:players(*)
         `)
         .eq('formation_id', formationId)
+        // formation_idでフィルタリングされているので、user_idの追加フィルタリングは不要
+        // フォーメーション自体がユーザーのものなので、その配置も自動的にそのユーザーのもの
 
       if (error) throw error
-      setFormationPositions(data || [])
+      
+      // フィールドプレイヤー（座標が0以上）のみ表示
+      const fieldPlayers = (data || []).filter(fp => fp.position_x >= 0 && fp.position_y >= 0)
+      setFormationPositions(fieldPlayers)
     } catch (err) {
       console.error('Error fetching formation positions:', err)
     }
@@ -320,6 +329,8 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
       await queryClient.invalidateQueries({ queryKey: ['recentMatches', user.id] })
       await queryClient.invalidateQueries({ queryKey: ['recent10Matches', user.id] })
       await queryClient.invalidateQueries({ queryKey: ['teamStats', user.id] })
+      await queryClient.invalidateQueries({ queryKey: ['topScorers', user.id] })
+      await queryClient.invalidateQueries({ queryKey: ['scoringData', user.id] })
       
       router.push('/')
     } catch (err) {
@@ -356,6 +367,8 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
       await queryClient.invalidateQueries({ queryKey: ['recentMatches', user.id] })
       await queryClient.invalidateQueries({ queryKey: ['recent10Matches', user.id] })
       await queryClient.invalidateQueries({ queryKey: ['teamStats', user.id] })
+      await queryClient.invalidateQueries({ queryKey: ['topScorers', user.id] })
+      await queryClient.invalidateQueries({ queryKey: ['scoringData', user.id] })
       
       router.push('/')
     } catch (err) {

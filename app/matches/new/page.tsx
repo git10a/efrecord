@@ -81,6 +81,10 @@ export default function NewMatchPage() {
   const fetchFormationPositions = useCallback(async (formationId: string) => {
     try {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) return
+      
       const { data, error } = await supabase
         .from('formation_positions')
         .select(`
@@ -90,7 +94,10 @@ export default function NewMatchPage() {
         .eq('formation_id', formationId)
 
       if (error) throw error
-      setFormationPositions(data || [])
+      
+      // フィールドプレイヤー（座標が0以上）のみ表示
+      const fieldPlayers = (data || []).filter(fp => fp.position_x >= 0 && fp.position_y >= 0)
+      setFormationPositions(fieldPlayers)
     } catch (err) {
       console.error('Error fetching formation positions:', err)
       setError('フォーメーション配置の取得に失敗しました')
@@ -238,6 +245,8 @@ export default function NewMatchPage() {
       await queryClient.invalidateQueries({ queryKey: ['recentMatches', user.id] })
       await queryClient.invalidateQueries({ queryKey: ['recent10Matches', user.id] })
       await queryClient.invalidateQueries({ queryKey: ['teamStats', user.id] })
+      await queryClient.invalidateQueries({ queryKey: ['topScorers', user.id] })
+      await queryClient.invalidateQueries({ queryKey: ['scoringData', user.id] })
       
       router.push('/')
     } catch (err) {
