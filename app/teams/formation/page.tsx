@@ -83,7 +83,8 @@ export default function FormationPage() {
         .from('formations')
         .select('*')
         .eq('user_id', user.id)
-        .order('is_default DESC, name')
+        .order('is_default', { ascending: false })
+        .order('name')
 
       if (formationsError) throw formationsError
 
@@ -213,8 +214,9 @@ export default function FormationPage() {
 
   const handleAddFormation = async () => {
     if (!newFormation.name.trim()) {
-      setError('フォーメーション名を入力してください')
-      return
+      // フォーメーション名が空の場合は自動生成
+      const defaultName = `フォーメーション${formations.length + 1}`
+      setNewFormation(prev => ({ ...prev, name: defaultName }))
     }
 
     setLoading(true)
@@ -225,11 +227,12 @@ export default function FormationPage() {
       
       if (!user) return
 
+      const formationName = newFormation.name.trim() || `フォーメーション${formations.length + 1}`
       const { data, error } = await supabase
         .from('formations')
         .insert({
           user_id: user.id,
-          name: newFormation.name.trim(),
+          name: formationName,
           formation_pattern: newFormation.formation_pattern
         })
         .select()

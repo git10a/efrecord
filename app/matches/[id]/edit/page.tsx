@@ -124,7 +124,8 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
         .from('formations')
         .select('*')
         .eq('user_id', user.id)
-        .order('is_default DESC, name')
+        .order('is_default', { ascending: false })
+        .order('name')
 
       if (formationsError) throw formationsError
 
