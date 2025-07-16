@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
@@ -62,12 +62,7 @@ export default function NewMatchPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
 
-  useEffect(() => {
-    fetchOpponents()
-    fetchFormations()
-  }, []) // fetchOpponentsとfetchFormationsは関数なので、依存配列は空のまま
-
-  const fetchOpponents = async () => {
+  const fetchOpponents = useCallback(async () => {
     try {
       const supabase = createClient()
       const { data, error } = await supabase
@@ -81,7 +76,12 @@ export default function NewMatchPage() {
       console.error('Error fetching opponents:', err)
       setError('対戦相手の取得に失敗しました')
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchOpponents()
+    fetchFormations()
+  }, [fetchOpponents])
 
   const fetchFormations = async () => {
     try {

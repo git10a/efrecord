@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 // Draggableのimportを削除し、dnd-kitを追加
 // import Draggable from 'react-draggable'
@@ -130,11 +130,7 @@ export default function FormationPage() {
   
   const router = useRouter()
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -178,7 +174,11 @@ export default function FormationPage() {
       console.error('Error details:', JSON.stringify(err, null, 2))
       setError(`データの取得に失敗しました: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const fetchFormationPositions = async (formationId: string) => {
     try {
@@ -585,9 +585,8 @@ export default function FormationPage() {
       const position = formationPositions.find(p => p.id === active.id)
       if (!position) return
       
-      // マウスの位置を取得してピッチ内の相対位置に変換
-      const rect = (over.rect as any)
-      const pitchRect = { width: 400, height: 384 } // ピッチのサイズ
+      // ピッチのサイズ
+      const pitchRect = { width: 400, height: 384 }
       
       let newX = position.position_x
       let newY = position.position_y
