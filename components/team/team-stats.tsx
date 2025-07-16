@@ -286,7 +286,7 @@ export function TeamStats({ userId, opponentId, globalPeriod }: TeamStatsProps) 
       {/* チーム別統計カード */}
       <div className="space-y-4">
         {/* 勝率と得失点を2列で表示 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
             <div className="p-6">
               <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
