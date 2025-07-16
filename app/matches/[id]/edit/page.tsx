@@ -69,7 +69,6 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
   const [currentFormation, setCurrentFormation] = useState<Formation | null>(null)
   const [formationPositions, setFormationPositions] = useState<FormationPosition[]>([])
   const [goalRecords, setGoalRecords] = useState<GoalRecord[]>([])
-  const [existingGoals, setExistingGoals] = useState<GoalRecord[]>([])
   const router = useRouter()
   const queryClient = useQueryClient()
 
@@ -186,7 +185,6 @@ export default function EditMatchPage({ params }: { params: Promise<{ id: string
         }
       })
 
-      setExistingGoals(Object.values(goalCounts))
       setGoalRecords(Object.values(goalCounts))
     } catch (err) {
       console.error('Error fetching existing goals:', err)
