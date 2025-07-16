@@ -95,9 +95,8 @@ export default function NewMatchPage() {
 
       if (error) throw error
       
-      // フィールドプレイヤー（座標が0以上）のみ表示
-      const fieldPlayers = (data || []).filter(fp => fp.position_x >= 0 && fp.position_y >= 0)
-      setFormationPositions(fieldPlayers)
+      // フィールドプレイヤーとベンチプレイヤーの両方を表示
+      setFormationPositions(data || [])
     } catch (err) {
       console.error('Error fetching formation positions:', err)
       setError('フォーメーション配置の取得に失敗しました')
@@ -376,6 +375,7 @@ export default function NewMatchPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {/* フィールドプレイヤー表示 */}
                   <div className="relative w-full h-64 bg-green-600 rounded-lg overflow-hidden mb-4">
                     {/* ピッチのライン */}
                     <div className="absolute inset-0 border-2 border-white opacity-30"></div>
@@ -383,31 +383,62 @@ export default function NewMatchPage() {
                     <div className="absolute left-1/4 top-0 bottom-0 border-l border-white opacity-30"></div>
                     <div className="absolute right-1/4 top-0 bottom-0 border-l border-white opacity-30"></div>
                     
-                    {/* 選手カード */}
-                    {formationPositions.map((position) => {
-                      const goalCount = goalRecords.find(record => record.player_id === position.player_id)?.count || 0
-                      return (
-                        <div
-                          key={position.id}
-                          className="absolute w-14 h-14 bg-white border-2 border-gray-300 rounded-lg shadow-md cursor-pointer hover:border-blue-500 transition-colors flex flex-col items-center justify-center text-xs"
-                          style={{
-                            left: `${position.position_x}%`,
-                            top: `${position.position_y}%`,
-                            transform: 'translate(-50%, -50%)'
-                          }}
-                          onClick={() => handlePlayerGoal(position.player_id, position.player.name)}
-                        >
-                          <div className="font-bold text-xs">{position.player.name}</div>
-                          <div className="text-gray-500 text-xs">{position.display_position}</div>
-                          {goalCount > 0 && (
-                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                              {goalCount}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
+                    {/* フィールドプレイヤーカード */}
+                    {formationPositions
+                      .filter(position => position.position_x >= 0 && position.position_y >= 0)
+                      .map((position) => {
+                        const goalCount = goalRecords.find(record => record.player_id === position.player_id)?.count || 0
+                        return (
+                          <div
+                            key={position.id}
+                            className="absolute w-14 h-14 bg-white border-2 border-gray-300 rounded-lg shadow-md cursor-pointer hover:border-blue-500 transition-colors flex flex-col items-center justify-center text-xs"
+                            style={{
+                              left: `${position.position_x}%`,
+                              top: `${position.position_y}%`,
+                              transform: 'translate(-50%, -50%)'
+                            }}
+                            onClick={() => handlePlayerGoal(position.player_id, position.player.name)}
+                          >
+                            <div className="font-bold text-xs">{position.player.name}</div>
+                            <div className="text-gray-500 text-xs">{position.display_position}</div>
+                            {goalCount > 0 && (
+                              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                {goalCount}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
                   </div>
+
+                  {/* ベンチプレイヤー表示 */}
+                  {formationPositions.filter(position => position.position_x < 0 || position.position_y < 0).length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-medium text-sm mb-2">ベンチ選手</h4>
+                      <div className="grid grid-cols-3 gap-2">
+                        {formationPositions
+                          .filter(position => position.position_x < 0 || position.position_y < 0)
+                          .map((position) => {
+                            const goalCount = goalRecords.find(record => record.player_id === position.player_id)?.count || 0
+                            return (
+                              <div
+                                key={position.id}
+                                className="w-full h-12 bg-gray-100 border border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors flex flex-col items-center justify-center text-xs relative"
+                                onClick={() => handlePlayerGoal(position.player_id, position.player.name)}
+                              >
+                                <div className="font-bold text-xs">{position.player.name}</div>
+                                <div className="text-gray-500 text-xs">{position.display_position}</div>
+                                {goalCount > 0 && (
+                                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                    {goalCount}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* 得点記録一覧 */}
                   {goalRecords.length > 0 && (
