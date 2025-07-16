@@ -128,7 +128,7 @@ function MatchesContent() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <History className="w-5 h-5 text-blue-600" />
-              {opponentName ? `vs ${opponentName}` : '全試合履歴'}
+              試合履歴
             </CardTitle>
           </CardHeader>
           <CardContent>

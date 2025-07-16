@@ -54,7 +54,7 @@ const getDateFilter = (period: PeriodFilter): string | null => {
 export default function Dashboard({ userId }: DashboardProps) {
   const supabase = createClient()
   const router = useRouter()
-  const [scoringPeriod, setScoringPeriod] = useState<PeriodFilter>('all')
+  const [globalPeriod, setGlobalPeriod] = useState<PeriodFilter>('all')
 
   const { data: userStats } = useQuery({
     queryKey: ['userStats', userId],
@@ -120,14 +120,14 @@ export default function Dashboard({ userId }: DashboardProps) {
 
   // 平均得点・失点を計算するためのクエリ
   const { data: scoringData } = useQuery({
-    queryKey: ['scoringData', userId, scoringPeriod],
+    queryKey: ['scoringData', userId, globalPeriod],
     queryFn: async () => {
       let query = supabase
         .from('matches')
         .select('user_score, opponent_score, match_date')
         .eq('user_id', userId)
       
-      const dateFilter = getDateFilter(scoringPeriod)
+      const dateFilter = getDateFilter(globalPeriod)
       if (dateFilter) {
         query = query.gte('match_date', dateFilter)
       }
@@ -290,6 +290,32 @@ export default function Dashboard({ userId }: DashboardProps) {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* 期間フィルター */}
+        <div className="mb-6">
+          <div className="flex items-center justify-center">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                <span>期間フィルター:</span>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {(['all', '1month', '1week', '3days', 'today'] as PeriodFilter[]).map((period) => (
+                  <button
+                    key={period}
+                    onClick={() => setGlobalPeriod(period)}
+                    className={`px-3 py-1.5 text-sm rounded-md transition-colors font-medium ${
+                      globalPeriod === period
+                        ? 'bg-blue-500 text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {getPeriodLabel(period)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* 統計カード */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card className="bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
@@ -299,27 +325,8 @@ export default function Dashboard({ userId }: DashboardProps) {
                   <Activity className="w-6 h-6 text-white" />
                 </div>
               </div>
-              <div className="text-sm font-medium text-gray-600 mb-3 text-center">得失点</div>
+              <div className="text-sm font-medium text-gray-600 mb-4 text-center">得失点</div>
               
-              {/* 期間選択ボタン */}
-              <div className="mb-4">
-                <div className="flex flex-wrap gap-1 justify-center">
-                  {(['all', '1month', '1week', '3days', 'today'] as PeriodFilter[]).map((period) => (
-                    <button
-                      key={period}
-                      onClick={() => setScoringPeriod(period)}
-                      className={`px-2 py-1 text-xs rounded transition-colors ${
-                        scoringPeriod === period
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {getPeriodLabel(period)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <div className="space-y-3">
                 <div className="flex items-center justify-center gap-4">
                   <div className="text-center">

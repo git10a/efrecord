@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,6 +20,7 @@ interface TeamStatsProps {
   userId: string
   opponentId: string
   teamName: string
+  globalPeriod: PeriodFilter
 }
 
 type PeriodFilter = 'all' | '1month' | '1week' | '3days' | 'today'
@@ -76,9 +77,8 @@ interface TeamStatsData {
   averagePointsConceded: number
 }
 
-export function TeamStats({ userId, opponentId }: TeamStatsProps) {
+export function TeamStats({ userId, opponentId, globalPeriod }: TeamStatsProps) {
   const supabase = createClient()
-  const [scoringPeriod, setScoringPeriod] = useState<PeriodFilter>('all')
 
   const { data: teamStats } = useQuery({
     queryKey: ['teamStats', userId, opponentId],
@@ -202,7 +202,7 @@ export function TeamStats({ userId, opponentId }: TeamStatsProps) {
 
   // 期間別得失点データを取得
   const { data: periodScoringData } = useQuery({
-    queryKey: ['teamScoringData', userId, opponentId, scoringPeriod],
+    queryKey: ['teamScoringData', userId, opponentId, globalPeriod],
     queryFn: async () => {
       let query = supabase
         .from('matches')
@@ -210,7 +210,7 @@ export function TeamStats({ userId, opponentId }: TeamStatsProps) {
         .eq('user_id', userId)
         .eq('opponent_id', opponentId)
       
-      const dateFilter = getDateFilter(scoringPeriod)
+      const dateFilter = getDateFilter(globalPeriod)
       if (dateFilter) {
         query = query.gte('match_date', dateFilter)
       }
@@ -301,26 +301,7 @@ export function TeamStats({ userId, opponentId }: TeamStatsProps) {
                 <Activity className="w-6 h-6 text-white" />
               </div>
             </div>
-            <div className="text-sm font-medium text-gray-600 mb-3 text-center">得失点</div>
-            
-            {/* 期間選択ボタン */}
-            <div className="mb-4">
-              <div className="flex flex-wrap gap-1 justify-center">
-                {(['all', '1month', '1week', '3days', 'today'] as PeriodFilter[]).map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => setScoringPeriod(period)}
-                    className={`px-2 py-1 text-xs rounded transition-colors ${
-                      scoringPeriod === period
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {getPeriodLabel(period)}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <div className="text-sm font-medium text-gray-600 mb-4 text-center">得失点</div>
 
             <div className="space-y-3">
               <div className="flex items-center justify-center gap-4">
