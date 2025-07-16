@@ -121,6 +121,7 @@ function MatchesContent() {
             userId={userId}
             opponentId={opponentId}
             teamName={opponentName}
+            globalPeriod={globalPeriod}
           />
         )}
 
