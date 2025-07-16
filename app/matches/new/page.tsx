@@ -161,8 +161,8 @@ export default function NewMatchPage() {
       }
     })
     
-    // 総得点も更新
-    setUserScore(prev => prev + 1)
+    // 自動得点增加を削除
+    // setUserScore(prev => prev + 1)
   }
 
   const handleRemoveGoal = (playerId: string) => {
@@ -179,8 +179,8 @@ export default function NewMatchPage() {
       }
     })
     
-    // 総得点も更新
-    setUserScore(prev => Math.max(0, prev - 1))
+    // 自動得点減少を削除
+    // setUserScore(prev => Math.max(0, prev - 1))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -285,9 +285,9 @@ export default function NewMatchPage() {
                     onChange={(e) => setSelectedOpponentId(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                   >
-                    <option value="">対戦相手を選択</option>
+                    <option value="" className="text-gray-900">対戦相手を選択</option>
                     {opponents.map((opponent) => (
-                      <option key={opponent.id} value={opponent.id}>
+                      <option key={opponent.id} value={opponent.id} className="text-gray-900">
                         {opponent.name}
                       </option>
                     ))}
@@ -356,7 +356,7 @@ export default function NewMatchPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                   >
                     {formations.map((formation) => (
-                      <option key={formation.id} value={formation.id}>
+                      <option key={formation.id} value={formation.id} className="text-gray-900">
                         {formation.name} ({formation.formation_pattern})
                       </option>
                     ))}
@@ -405,7 +405,7 @@ export default function NewMatchPage() {
                                 }}
                                 onClick={() => handlePlayerGoal(position.player_id, position.player.name)}
                               >
-                                <div className="font-bold text-xs truncate w-full text-center px-1">{position.player.name}</div>
+                                <div className="font-bold text-xs truncate w-full text-center px-1 text-gray-900">{position.player.name}</div>
                                 {goalCount > 0 && (
                                   <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                                     {goalCount}
@@ -419,7 +419,7 @@ export default function NewMatchPage() {
                       {/* ベンチプレイヤー表示 */}
                       {formationPositions.filter(position => position.position_x < 0 || position.position_y < 0).length > 0 && (
                         <div className="mb-4">
-                          <h4 className="font-medium text-sm mb-2">ベンチ選手</h4>
+                          <h4 className="font-medium text-sm mb-2 text-gray-900">ベンチ選手</h4>
                           <div className="grid grid-cols-3 gap-2">
                             {formationPositions
                               .filter(position => position.position_x < 0 || position.position_y < 0)
@@ -431,7 +431,7 @@ export default function NewMatchPage() {
                                     className="w-full h-12 bg-gray-100 border border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors flex flex-col items-center justify-center text-xs relative"
                                     onClick={() => handlePlayerGoal(position.player_id, position.player.name)}
                                   >
-                                    <div className="font-bold text-xs">{position.player.name}</div>
+                                    <div className="font-bold text-xs text-gray-900">{position.player.name}</div>
                                     {position.player.number && (
                                       <div className="text-gray-500 text-xs">#{position.player.number}</div>
                                     )}

@@ -453,7 +453,7 @@ export default function Dashboard({ userId }: DashboardProps) {
                         <div className="text-xs font-medium text-gray-600 w-4">{index + 1}</div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <div className="text-xs font-medium truncate">
+                            <div className="text-xs font-medium truncate text-gray-900">
                               {scorer.player_name}
                               {scorer.player_number && (
                                 <span className="text-gray-500"> #{scorer.player_number}</span>
