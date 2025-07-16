@@ -257,7 +257,7 @@ export default function Dashboard({ userId }: DashboardProps) {
             <div className="flex items-center gap-2">
               {/* チーム名ボタン */}
               <Link href="/memos">
-                <div className="h-9 px-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 hover:border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:text-gray-900 cursor-pointer transition-all duration-200 flex items-center shadow-sm">
+                <div className="h-9 px-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 hover:border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:text-gray-900 cursor-pointer transition-all duration-200 flex items-center shadow-sm select-none touch-manipulation">
                   {userStats?.team_name || 'マイチーム'}
                 </div>
               </Link>
@@ -428,7 +428,7 @@ export default function Dashboard({ userId }: DashboardProps) {
                       </span>
                       <span className="text-gray-500">vs</span>
                       <span 
-                        className="px-3 py-1 bg-gray-100 hover:bg-gray-200 border border-gray-200 hover:border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:text-gray-900 cursor-pointer transition-all duration-200 shadow-sm"
+                        className="px-3 py-1 bg-gray-100 hover:bg-gray-200 border border-gray-200 hover:border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:text-gray-900 cursor-pointer transition-all duration-200 shadow-sm select-none touch-manipulation"
                         onClick={(e) => {
                           e.stopPropagation()
                           router.push(`/matches?opponent=${match.opponent_id}`)

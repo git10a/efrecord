@@ -150,7 +150,7 @@ function MatchesContent() {
                         <>
                           <span className="text-gray-500">vs</span>
                           <span 
-                            className="px-3 py-1 bg-gray-100 hover:bg-gray-200 border border-gray-200 hover:border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:text-gray-900 cursor-pointer transition-all duration-200 shadow-sm"
+                            className="px-3 py-1 bg-gray-100 hover:bg-gray-200 border border-gray-200 hover:border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:text-gray-900 cursor-pointer transition-all duration-200 shadow-sm select-none touch-manipulation"
                             onClick={(e) => {
                               e.stopPropagation()
                               router.push(`/matches?opponent=${match.opponent_id}`)
