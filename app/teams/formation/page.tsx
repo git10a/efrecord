@@ -2,7 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Draggable from 'react-draggable'
+// Draggableのimportを削除し、dnd-kitを追加
+// import Draggable from 'react-draggable'
+import {
+  DndContext,
+  useDraggable,
+  useDroppable,
+  closestCenter,
+  DragEndEvent,
+} from '@dnd-kit/core'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -35,6 +43,45 @@ interface Formation {
   is_default: boolean
 }
 
+// フォーメーションごとの初期配置パターンを定義
+const FORMATION_PATTERNS: Record<string, Array<{ x: number, y: number, display_position: string }>> = {
+  '4-4-2': [
+    // GK
+    { x: 200, y: 340, display_position: 'GK' },
+    // DF
+    { x: 60, y: 250, display_position: 'DF' },
+    { x: 140, y: 250, display_position: 'DF' },
+    { x: 260, y: 250, display_position: 'DF' },
+    { x: 340, y: 250, display_position: 'DF' },
+    // MF
+    { x: 60, y: 150, display_position: 'MF' },
+    { x: 140, y: 150, display_position: 'MF' },
+    { x: 260, y: 150, display_position: 'MF' },
+    { x: 340, y: 150, display_position: 'MF' },
+    // FW
+    { x: 140, y: 60, display_position: 'FW' },
+    { x: 260, y: 60, display_position: 'FW' },
+  ],
+  '4-3-3': [
+    // GK
+    { x: 200, y: 340, display_position: 'GK' },
+    // DF
+    { x: 60, y: 250, display_position: 'DF' },
+    { x: 140, y: 250, display_position: 'DF' },
+    { x: 260, y: 250, display_position: 'DF' },
+    { x: 340, y: 250, display_position: 'DF' },
+    // MF
+    { x: 100, y: 150, display_position: 'MF' },
+    { x: 200, y: 150, display_position: 'MF' },
+    { x: 300, y: 150, display_position: 'MF' },
+    // FW
+    { x: 60, y: 60, display_position: 'FW' },
+    { x: 200, y: 60, display_position: 'FW' },
+    { x: 340, y: 60, display_position: 'FW' },
+  ],
+  // 必要に応じて他のパターンも追加
+}
+
 export default function FormationPage() {
   const [players, setPlayers] = useState<Player[]>([])
   const [formations, setFormations] = useState<Formation[]>([])
@@ -51,6 +98,10 @@ export default function FormationPage() {
   // フォーメーション管理
   const [showAddFormation, setShowAddFormation] = useState(false)
   const [newFormation, setNewFormation] = useState({ name: '', formation_pattern: '4-4-2' })
+  
+  // 選手割り当て用の状態
+  const [selectedPosition, setSelectedPosition] = useState<{ x: number, y: number, display_position: string } | null>(null)
+  const [showPlayerAssignment, setShowPlayerAssignment] = useState(false)
   
   const router = useRouter()
 
@@ -258,10 +309,101 @@ export default function FormationPage() {
   }
 
   const handleFormationChange = async (formationId: string) => {
-    const formation = formations.find(f => f.id === formationId)
-    if (formation) {
-      setCurrentFormation(formation)
+    try {
+      const supabase = createClient()
+      
+      // 新しいフォーメーションを取得
+      const { data: newFormation, error: formationError } = await supabase
+        .from('formations')
+        .select('*')
+        .eq('id', formationId)
+        .single()
+
+      if (formationError) throw formationError
+
+      setCurrentFormation(newFormation)
+
+      // 既存の選手割り当てを取得
+      const { data: existingPositions, error: positionsError } = await supabase
+        .from('formation_positions')
+        .select(`
+          *,
+          player:players(*)
+        `)
+        .eq('formation_id', formationId)
+
+      if (positionsError) throw positionsError
+
+      // 新しいフォーメーションパターンを取得
+      const newPattern = FORMATION_PATTERNS[newFormation.formation_pattern]
+      if (!newPattern) {
+        setFormationPositions(existingPositions || [])
+        return
+      }
+
+      // 既存の割り当てを新しいパターンに再配置
+      const reassignedPositions = []
+      const usedPositions = new Set()
+
+      // まず、同じポジション（GK, DF, MF, FW）の選手をできるだけ同じポジションに配置
+      for (const existingPos of (existingPositions || [])) {
+        const player = existingPos.player
+        const matchingNewPos = newPattern.find((pos, idx) => 
+          pos.display_position === existingPos.display_position && 
+          !usedPositions.has(idx)
+        )
+
+        if (matchingNewPos) {
+          // 同じポジションの位置に配置
+          reassignedPositions.push({
+            ...existingPos,
+            position_x: matchingNewPos.x,
+            position_y: matchingNewPos.y,
+            display_position: matchingNewPos.display_position
+          })
+          usedPositions.add(newPattern.indexOf(matchingNewPos))
+        } else {
+          // 同じポジションの位置がない場合は、空いている位置に配置
+          const availablePos = newPattern.find((pos, idx) => !usedPositions.has(idx))
+          if (availablePos) {
+            reassignedPositions.push({
+              ...existingPos,
+              position_x: availablePos.x,
+              position_y: availablePos.y,
+              display_position: availablePos.display_position
+            })
+            usedPositions.add(newPattern.indexOf(availablePos))
+          }
+        }
+      }
+
+      // データベースを更新
+      if (reassignedPositions.length > 0) {
+        // 既存の割り当てを削除
+        await supabase
+          .from('formation_positions')
+          .delete()
+          .eq('formation_id', formationId)
+
+        // 新しい割り当てを追加
+        const { error: insertError } = await supabase
+          .from('formation_positions')
+          .insert(reassignedPositions.map(pos => ({
+            formation_id: formationId,
+            player_id: pos.player_id,
+            position_x: pos.position_x,
+            position_y: pos.position_y,
+            display_position: pos.display_position
+          })))
+
+        if (insertError) throw insertError
+      }
+
+      // 更新された割り当てを取得
       await fetchFormationPositions(formationId)
+    } catch (err) {
+      console.error('Error changing formation:', err)
+      setError('フォーメーションの変更に失敗しました')
     }
   }
 
@@ -327,6 +469,116 @@ export default function FormationPage() {
       console.error('Error toggling player position:', err)
       setError('選手配置の更新に失敗しました')
     }
+  }
+
+  // dnd-kit用のドラッグ可能な選手カードコンポーネントを追加
+  function DraggablePlayerCard({ position, onPositionUpdate }: {
+    position: FormationPosition,
+    onPositionUpdate: (id: string, x: number, y: number) => void
+  }) {
+    // dnd-kitのuseDraggableフックを使う
+    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+      id: position.id,
+      data: {
+        x: position.position_x,
+        y: position.position_y,
+      },
+    })
+    // transformで現在の位置を反映
+    const style = {
+      position: 'absolute' as const,
+      left: position.position_x,
+      top: position.position_y,
+      transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
+      width: '4rem',
+      height: '4rem',
+      background: 'white',
+      border: '2px solid #d1d5db',
+      borderRadius: '0.5rem',
+      boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '0.75rem',
+      cursor: 'grab',
+      zIndex: 10,
+    }
+    return (
+      <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+        <div className="font-bold">{position.player.name}</div>
+        <div className="text-gray-500">{position.display_position}</div>
+      </div>
+    )
+  }
+
+  // ドラッグ終了時の処理を追加
+  type DragEndEventType = DragEndEvent & { active: { id: string }, delta: { x: number, y: number } }
+  function handleDragEnd(event: DragEndEventType) {
+    const { active, delta } = event
+    // 対象のpositionを探す
+    const pos = formationPositions.find(p => p.id === active.id)
+    if (!pos) return
+    // 新しい位置を計算
+    const newX = pos.position_x + (delta?.x || 0)
+    const newY = pos.position_y + (delta?.y || 0)
+    // 位置を更新
+    handlePositionUpdate(pos.id, newX, newY)
+  }
+
+  // 選手割り当て処理を追加
+  const handleAssignPlayer = async (playerId: string) => {
+    if (!selectedPosition || !currentFormation) return
+    
+    setLoading(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) return
+
+      // 既存の同じ位置の割り当てを削除
+      await supabase
+        .from('formation_positions')
+        .delete()
+        .eq('formation_id', currentFormation.id)
+        .eq('position_x', selectedPosition.x)
+        .eq('position_y', selectedPosition.y)
+
+      // 新しい割り当てを追加
+      const { error } = await supabase
+        .from('formation_positions')
+        .insert({
+          formation_id: currentFormation.id,
+          player_id: playerId,
+          position_x: selectedPosition.x,
+          position_y: selectedPosition.y,
+          display_position: selectedPosition.display_position
+        })
+
+      if (error) throw error
+
+      setSelectedPosition(null)
+      setShowPlayerAssignment(false)
+      await fetchFormationPositions(currentFormation.id)
+    } catch (err) {
+      console.error('Error assigning player:', err)
+      setError('選手の割り当てに失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 未割り当て選手を取得
+  const getUnassignedPlayers = () => {
+    const assignedPlayerIds = formationPositions.map(fp => fp.player_id)
+    return players.filter(player => !assignedPlayerIds.includes(player.id))
+  }
+
+  // 空カードのクリック処理を追加
+  const handleEmptyCardClick = (position: { x: number, y: number, display_position: string }) => {
+    setSelectedPosition(position)
+    setShowPlayerAssignment(true)
   }
 
   return (
@@ -523,30 +775,77 @@ export default function FormationPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="relative w-full h-96 bg-green-600 rounded-lg overflow-hidden">
-                  {/* ピッチのライン */}
-                  <div className="absolute inset-0 border-2 border-white opacity-30"></div>
-                  <div className="absolute top-1/2 left-0 right-0 border-t border-white opacity-30"></div>
-                  <div className="absolute left-1/4 top-0 bottom-0 border-l border-white opacity-30"></div>
-                  <div className="absolute right-1/4 top-0 bottom-0 border-l border-white opacity-30"></div>
-                  
-                  {/* 選手カード */}
-                  {formationPositions.map((position) => (
-                    <Draggable
-                      key={position.id}
-                      defaultPosition={{ x: position.position_x, y: position.position_y }}
-                      bounds="parent"
-                      onStop={(e, data) => {
-                        handlePositionUpdate(position.id, data.x, data.y)
-                      }}
-                    >
-                      <div className="absolute w-16 h-16 bg-white border-2 border-gray-300 rounded-lg shadow-md cursor-move flex flex-col items-center justify-center text-xs">
-                        <div className="font-bold">{position.player.name}</div>
-                        <div className="text-gray-500">{position.display_position}</div>
-                      </div>
-                    </Draggable>
-                  ))}
-                </div>
+                {/* dnd-kitのDndContextで囲む */}
+                <DndContext
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <div className="relative w-full h-96 bg-green-600 rounded-lg overflow-hidden">
+                    {/* ピッチのライン */}
+                    <div className="absolute inset-0 border-2 border-white opacity-30"></div>
+                    <div className="absolute top-1/2 left-0 right-0 border-t border-white opacity-30"></div>
+                    <div className="absolute left-1/4 top-0 bottom-0 border-l border-white opacity-30"></div>
+                    <div className="absolute right-1/4 top-0 bottom-0 border-l border-white opacity-30"></div>
+                    {/* フォーメーションパターンに従って空カードを表示 */}
+                    {currentFormation && FORMATION_PATTERNS[currentFormation.formation_pattern] &&
+                      FORMATION_PATTERNS[currentFormation.formation_pattern].map((pos, idx) => {
+                        // 既に割り当てられているかチェック
+                        const assignedPosition = formationPositions.find(fp => 
+                          fp.position_x === pos.x && fp.position_y === pos.y
+                        )
+                        
+                        if (assignedPosition) {
+                          // 既に割り当てられている場合は、その選手を表示
+                          return (
+                            <DraggablePlayerCard
+                              key={assignedPosition.id}
+                              position={assignedPosition}
+                              onPositionUpdate={handlePositionUpdate}
+                            />
+                          )
+                        } else {
+                          // 空のカードを表示（クリック可能）
+                          return (
+                            <div
+                              key={`empty-${idx}`}
+                              onClick={() => handleEmptyCardClick(pos)}
+                              style={{
+                                position: 'absolute',
+                                left: pos.x,
+                                top: pos.y,
+                                width: '4rem',
+                                height: '4rem',
+                                background: 'white',
+                                border: '2px dashed #d1d5db',
+                                borderRadius: '0.5rem',
+                                boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.75rem',
+                                zIndex: 10,
+                                cursor: 'pointer',
+                              }}
+                              className="hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                            >
+                              <div className="font-bold text-gray-400">+</div>
+                              <div className="text-gray-400">{pos.display_position}</div>
+                            </div>
+                          )
+                        }
+                      })
+                    }
+                    {/* 既存のformationPositionsの表示を削除（上記で統合済み） */}
+                    {/* {formationPositions.length > 0 && formationPositions.map((position) => (
+                      <DraggablePlayerCard
+                        key={position.id}
+                        position={position}
+                        onPositionUpdate={handlePositionUpdate}
+                      />
+                    ))} */}
+                  </div>
+                </DndContext>
               </CardContent>
             </Card>
           </div>
@@ -587,6 +886,46 @@ export default function FormationPage() {
                     キャンセル
                   </Button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showPlayerAssignment && selectedPosition && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg w-96 max-h-96 overflow-y-auto">
+              <h3 className="text-lg font-bold mb-4">
+                {selectedPosition.display_position} に選手を割り当て
+              </h3>
+              <div className="space-y-2">
+                {getUnassignedPlayers().map((player) => (
+                  <div
+                    key={player.id}
+                    className="p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                    onClick={() => handleAssignPlayer(player.id)}
+                  >
+                    <div className="font-medium">{player.name}</div>
+                    <div className="text-sm text-gray-500">
+                      {player.position} {player.number && `#${player.number}`}
+                    </div>
+                  </div>
+                ))}
+                {getUnassignedPlayers().length === 0 && (
+                  <div className="text-center text-gray-500 py-4">
+                    割り当て可能な選手がいません
+                  </div>
+                )}
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedPosition(null)
+                    setShowPlayerAssignment(false)
+                  }}
+                >
+                  キャンセル
+                </Button>
               </div>
             </div>
           </div>
