@@ -384,22 +384,17 @@ export default function Dashboard({ userId }: DashboardProps) {
         <Card className="bg-white shadow-md">
           <CardHeader className="pb-4">
             <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <CardTitle className="text-xl font-bold text-gray-800">
-                  最近の試合
-                </CardTitle>
-                {/* 連勝連敗の表示 */}
-                <div className="flex items-center gap-2">
-                  <div className={`w-8 h-8 ${getStreakBackground(userStats?.current_streak || 0)} rounded-full flex items-center justify-center`}>
-                    {(() => {
-                      const { icon: IconComponent, size } = getStreakIcon(userStats?.current_streak || 0)
-                      return <IconComponent className={`${size} text-white`} />
-                    })()}
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">
-                    {getStreakText(userStats?.current_streak || 0)}
-                  </span>
+              {/* 連勝連敗の表示 */}
+              <div className="flex items-center gap-2">
+                <div className={`w-8 h-8 ${getStreakBackground(userStats?.current_streak || 0)} rounded-full flex items-center justify-center`}>
+                  {(() => {
+                    const { icon: IconComponent, size } = getStreakIcon(userStats?.current_streak || 0)
+                    return <IconComponent className={`${size} text-white`} />
+                  })()}
                 </div>
+                <span className="text-sm font-medium text-gray-700">
+                  {getStreakText(userStats?.current_streak || 0)}
+                </span>
               </div>
               <Link href="/matches/new">
                 <Button size="sm">
