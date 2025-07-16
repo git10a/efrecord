@@ -1,32 +1,4 @@
-'use client'
-
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-// Draggableのimportを削除し、dnd-kitを追加
-// import Draggable from 'react-draggable'
-import {
-  DndContext,
-  useDraggable,
-  useDroppable,
-  closestCenter,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  useSensor,
-  useSensors,
-  PointerSensor,
-  KeyboardSensor,
-} from '@dnd-kit/core'
-import {
-  sortableKeyboardCoordinates,
-} from '@dnd-kit/sortable'
-import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
-import { PageLayout } from '@/components/layout/page-layout'
-import { Plus, Edit2, Trash2 } from 'lucide-react'
+// This file has been deleted as per user request
 
 interface Player {
   id: string

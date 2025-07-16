@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { PageLayout } from '@/components/layout/page-layout'
-import { Edit2, Plus, Users, User, Trash2, Layout } from 'lucide-react'
+import { Edit2, Plus, Users, User, Trash2 } from 'lucide-react'
 
 interface Team {
   id: string
@@ -306,14 +306,6 @@ export default function TeamsPage() {
                     >
                       <Edit2 className="w-4 h-4 mr-2" />
                       編集
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => router.push('/teams/formation')}
-                    >
-                      <Layout className="w-4 h-4 mr-2" />
-                      フォーメーション
                     </Button>
                   </div>
                 </>
