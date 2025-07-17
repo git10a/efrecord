@@ -57,4 +57,4 @@ SELECT
   COUNT(*) as count
 FROM matches m
 JOIN opponents o ON m.opponent_id = o.id
-WHERE o.created_by IS NULL; 
+WHERE o.created_by IS NULL;

@@ -5,7 +5,7 @@ DROP FUNCTION IF EXISTS calculate_streak(uuid);
 
 -- 統計を完全に再計算する関数
 CREATE OR REPLACE FUNCTION recalculate_user_stats(user_id_param UUID)
-RETURNS VOID AS $$
+RETURNS VOID AS $
 DECLARE
     total_matches_count INT;
     total_wins_count INT;
@@ -141,11 +141,11 @@ BEGIN
         worst_loss_streak = EXCLUDED.worst_loss_streak,
         updated_at = EXCLUDED.updated_at;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
 
 -- トリガー関数（INSERT、UPDATE、DELETE対応）
 CREATE OR REPLACE FUNCTION trigger_recalculate_user_stats()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $
 BEGIN
     -- INSERT/UPDATE の場合は NEW.user_id を使用
     IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
@@ -167,7 +167,7 @@ BEGIN
     
     RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
 
 -- トリガーを作成（INSERT、UPDATE、DELETE時に実行）
 CREATE TRIGGER matches_stats_trigger
@@ -176,7 +176,7 @@ CREATE TRIGGER matches_stats_trigger
     EXECUTE FUNCTION trigger_recalculate_user_stats();
 
 -- 既存のすべてのユーザーの統計を再計算
-DO $$
+DO $
 DECLARE
     user_record RECORD;
 BEGIN
@@ -185,4 +185,4 @@ BEGIN
     LOOP
         PERFORM recalculate_user_stats(user_record.user_id);
     END LOOP;
-END $$;
+END $;

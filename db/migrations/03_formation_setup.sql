@@ -175,7 +175,7 @@ CREATE POLICY "Users can delete own match goals"
 
 -- デフォルトフォーメーション作成用の関数
 CREATE OR REPLACE FUNCTION create_default_formation(p_user_id UUID)
-RETURNS UUID AS $$
+RETURNS UUID AS $
 DECLARE
   v_formation_id UUID;
 BEGIN
@@ -186,11 +186,11 @@ BEGIN
   
   RETURN v_formation_id;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
 
 -- サンプルデータ挿入用の関数
 CREATE OR REPLACE FUNCTION insert_sample_players(p_user_id UUID)
-RETURNS VOID AS $$
+RETURNS VOID AS $
 DECLARE
   v_gk_id UUID;
   v_df1_id UUID;
@@ -236,4 +236,4 @@ BEGIN
     (v_formation_id, v_fw1_id, 35, 30, 'FW'),
     (v_formation_id, v_fw2_id, 65, 30, 'FW');
 END;
-$$ LANGUAGE plpgsql; 
+$ LANGUAGE plpgsql;

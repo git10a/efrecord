@@ -15,6 +15,20 @@ interface DashboardProps {
 
 type PeriodFilter = 'all' | '1month' | '1week' | '3days' | 'today'
 
+interface MatchWithOpponent {
+  id: string
+  user_id: string
+  opponent_id: string
+  user_score: number
+  opponent_score: number
+  result: 'win' | 'draw' | 'loss'
+  match_date: string
+  memo: string | null
+  created_at: string
+  updated_at: string
+  opponents: { name: string } | null
+}
+
 // 選手データの型定義
 interface Player {
   id: number
@@ -266,7 +280,7 @@ export default function Dashboard({ userId }: DashboardProps) {
     ? (totalPointsConceded / scoringData.length).toFixed(1)
     : '0.0'
 
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<void> => {
     try {
       const supabase = createClient()
       await supabase.auth.signOut()
@@ -363,7 +377,6 @@ export default function Dashboard({ userId }: DashboardProps) {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-gray-800">今日の選手</h2>
-                <p className="text-sm text-gray-600">毎日変わるサッカーの歴史</p>
               </div>
             </div>
             {todayPlayer ? (
@@ -376,7 +389,7 @@ export default function Dashboard({ userId }: DashboardProps) {
                   {/* 選手情報 */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-gray-800 truncate">{todayPlayer.name}</h3>
+                      <h3 className="text-xl font-bold text-gray-800">{todayPlayer.name}</h3>
                       <div className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
                         {todayPlayer.position}
                       </div>
@@ -516,7 +529,7 @@ export default function Dashboard({ userId }: DashboardProps) {
                           router.push(`/matches?opponent=${match.opponent_id}`)
                         }}
                       >
-                        {(match.opponents as { name: string })?.name || '不明'}
+                        {(match as MatchWithOpponent).opponents?.name || '不明'}
                       </span>
                     </div>
                     <div className="text-right">

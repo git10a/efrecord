@@ -30,4 +30,4 @@ CREATE POLICY "Users can delete their own opponents"
   USING (
     auth.uid() IS NOT NULL AND 
     created_by = auth.uid()
-  ); 
+  );

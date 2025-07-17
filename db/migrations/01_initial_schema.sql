@@ -137,7 +137,7 @@ CREATE POLICY "Users can update own opponent stats"
 
 -- Function to calculate match result
 CREATE OR REPLACE FUNCTION calculate_match_result()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $
 BEGIN
   IF NEW.user_score > NEW.opponent_score THEN
     NEW.result := 'win';
@@ -148,7 +148,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
 
 -- Trigger to auto-calculate result
 CREATE TRIGGER set_match_result
@@ -158,7 +158,7 @@ CREATE TRIGGER set_match_result
 
 -- Function to update user stats
 CREATE OR REPLACE FUNCTION update_user_stats_after_match()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $
 BEGIN
   -- Insert or update user_stats
   INSERT INTO user_stats (
@@ -209,7 +209,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
 
 -- Trigger to update stats after match insert
 CREATE TRIGGER update_stats_after_match_insert

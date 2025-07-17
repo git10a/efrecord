@@ -51,4 +51,4 @@ SELECT
 FROM profiles p
 LEFT JOIN opponents o ON p.id = o.created_by
 GROUP BY p.id, p.display_name
-ORDER BY p.created_at DESC; 
+ORDER BY p.created_at DESC;

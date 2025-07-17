@@ -23,7 +23,7 @@ WHERE NOT EXISTS (SELECT 1 FROM opponents WHERE name = 'ぱるちゃんかわい
 
 -- 連勝記録を正しく計算する関数を作成
 CREATE OR REPLACE FUNCTION calculate_current_streak(user_id_param UUID)
-RETURNS INTEGER AS $$
+RETURNS INTEGER AS $
 DECLARE
   current_streak INTEGER := 0;
   match_result TEXT;
@@ -61,11 +61,11 @@ BEGIN
   
   RETURN current_streak;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
 
 -- 連勝記録計算を含む統計更新関数を修正
 CREATE OR REPLACE FUNCTION update_user_stats_after_match()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $
 DECLARE
   calculated_streak INTEGER;
   best_win INTEGER := 0;
@@ -145,4 +145,4 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
