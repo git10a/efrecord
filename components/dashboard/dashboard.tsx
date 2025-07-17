@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Trophy, Target, TrendingUp, Plus, LogOut, Activity, Flame, CloudRain, Zap, Wind, Droplets, CloudLightning, Star, Globe, Award } from 'lucide-react'
+import { Trophy, Target, TrendingUp, Plus, LogOut, Activity, Flame, CloudRain, Zap, Wind, Droplets, CloudLightning, Star, Globe } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -380,16 +380,14 @@ export default function Dashboard({ userId }: DashboardProps) {
               </div>
             </div>
             {todayPlayer ? (
-              <div className="bg-white rounded-lg p-4 max-w-sm border border-yellow-100">
-                <div className="flex items-start gap-4">
-                  {/* 選手アイコン */}
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
-                    <Award className="w-10 h-10 text-white" />
-                  </div>
+              <div className="bg-white rounded-lg p-4 border border-yellow-100">
+                <div className="space-y-3">
                   {/* 選手情報 */}
-                  <div className="flex-1 min-w-0">
+                  <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-gray-800">{todayPlayer.name}</h3>
+                      <h3 className="text-xl font-bold text-gray-800 whitespace-nowrap">
+                        {todayPlayer.name}
+                      </h3>
                       <div className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
                         {todayPlayer.position}
                       </div>
