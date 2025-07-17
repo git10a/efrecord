@@ -342,42 +342,11 @@ export default function Dashboard({ userId }: DashboardProps) {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 期間フィルター */}
-        <div className="mb-6">
-          <div className="flex items-center justify-center">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                <span>期間フィルター:</span>
-              </div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {(['all', '1month', '1week', '3days', 'today'] as PeriodFilter[]).map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => setGlobalPeriod(period)}
-                    className={`px-3 py-1.5 text-sm rounded-md transition-colors font-medium ${
-                      globalPeriod === period
-                        ? 'bg-blue-500 text-white shadow-sm'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {getPeriodLabel(period)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 伝説の選手 */}
+        {/* 今日の選手 */}
         <div className="mb-6">
           <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl shadow-lg border border-yellow-200 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-md">
-                <Star className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-800">今日の選手</h2>
-              </div>
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-gray-800">今日の選手</h2>
             </div>
             {todayPlayer ? (
               <div className="bg-white rounded-lg p-4 border border-yellow-100">
@@ -385,7 +354,7 @@ export default function Dashboard({ userId }: DashboardProps) {
                   {/* 選手情報 */}
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-gray-800 whitespace-nowrap">
+                      <h3 className="text-xl font-bold text-gray-800">
                         {todayPlayer.name}
                       </h3>
                       <div className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
@@ -413,6 +382,32 @@ export default function Dashboard({ userId }: DashboardProps) {
                 <p className="text-sm text-gray-400 mt-1">しばらくお待ちください</p>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* 期間フィルター */}
+        <div className="mb-6">
+          <div className="flex items-center justify-center">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                <span>期間フィルター:</span>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {(['all', '1month', '1week', '3days', 'today'] as PeriodFilter[]).map((period) => (
+                  <button
+                    key={period}
+                    onClick={() => setGlobalPeriod(period)}
+                    className={`px-3 py-1.5 text-sm rounded-md transition-colors font-medium ${
+                      globalPeriod === period
+                        ? 'bg-blue-500 text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {getPeriodLabel(period)}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
