@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Trophy, Target, TrendingUp, Plus, LogOut, Activity, Flame, CloudRain, Zap, Wind, Droplets, CloudLightning, Star, Globe, ExternalLink } from 'lucide-react'
+import { Trophy, Target, TrendingUp, Plus, LogOut, Activity, Flame, CloudRain, Zap, Wind, Droplets, CloudLightning, Star, Globe } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -345,7 +345,7 @@ export default function Dashboard({ userId }: DashboardProps) {
         {/* 今日の選手 */}
         <div className="mb-6">
           <div className="mb-4">
-            <h2 className="text-lg font-bold text-gray-800">Today's Epic Player</h2>
+            <h2 className="text-lg font-bold text-gray-800">Today&apos;s Epic Player</h2>
           </div>
           {todayPlayer ? (
             <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-md">
