@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Trophy, Target, TrendingUp, Plus, LogOut, Activity, Flame, CloudRain, Zap, Wind, Droplets, CloudLightning } from 'lucide-react'
+import { Trophy, Target, TrendingUp, Plus, LogOut, Activity, Flame, CloudRain, Zap, Wind, Droplets, CloudLightning, Star, Globe, Award } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -14,6 +14,15 @@ interface DashboardProps {
 }
 
 type PeriodFilter = 'all' | '1month' | '1week' | '3days' | 'today'
+
+// 選手データの型定義
+interface Player {
+  id: number
+  name: string
+  position: string
+  country: string
+  episode: string
+}
 
 const getPeriodLabel = (period: PeriodFilter): string => {
   switch (period) {
@@ -55,6 +64,35 @@ export default function Dashboard({ userId }: DashboardProps) {
   const supabase = createClient()
   const router = useRouter()
   const [globalPeriod, setGlobalPeriod] = useState<PeriodFilter>('all')
+
+  // 選手データを取得
+  const { data: players } = useQuery({
+    queryKey: ['players'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .order('id')
+      
+      if (error) throw error
+      return data as Player[]
+    }
+  })
+
+  // 今日の選手を選択（日付ベースでランダム）
+  const getTodayPlayer = (players: Player[] | undefined): Player | null => {
+    if (!players || players.length === 0) return null
+    
+    const today = new Date()
+    const dateString = today.toISOString().split('T')[0] // YYYY-MM-DD形式
+    const seed = parseInt(dateString.replace(/-/g, '')) // 日付を数値に変換
+    
+    // シードベースのランダム選択（同じ日は同じ選手）
+    const randomIndex = seed % players.length
+    return players[randomIndex]
+  }
+
+  const todayPlayer = getTodayPlayer(players)
 
   const { data: userStats } = useQuery({
     queryKey: ['userStats', userId],
@@ -313,6 +351,57 @@ export default function Dashboard({ userId }: DashboardProps) {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* 伝説の選手 */}
+        <div className="mb-6">
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl shadow-lg border border-yellow-200 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-md">
+                <Star className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-800">今日の選手</h2>
+                <p className="text-sm text-gray-600">毎日変わるサッカーの歴史</p>
+              </div>
+            </div>
+            {todayPlayer ? (
+              <div className="bg-white rounded-lg p-4 max-w-sm border border-yellow-100">
+                <div className="flex items-start gap-4">
+                  {/* 選手アイコン */}
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
+                    <Award className="w-10 h-10 text-white" />
+                  </div>
+                  {/* 選手情報 */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-xl font-bold text-gray-800 truncate">{todayPlayer.name}</h3>
+                      <div className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                        {todayPlayer.position}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Globe className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-700">{todayPlayer.country}</span>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {todayPlayer.episode}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg p-6 text-center shadow-sm border border-yellow-100">
+                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Star className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-500 font-medium">選手データを読み込み中...</p>
+                <p className="text-sm text-gray-400 mt-1">しばらくお待ちください</p>
+              </div>
+            )}
           </div>
         </div>
 
