@@ -98,7 +98,9 @@ export default function Dashboard({ userId }: DashboardProps) {
     if (!players || players.length === 0) return null
     
     const today = new Date()
-    const dateString = today.toISOString().split('T')[0] // YYYY-MM-DD形式
+    // 日本時間（UTC+9）に変換
+    const japanTime = new Date(today.getTime() + (9 * 60 * 60 * 1000))
+    const dateString = japanTime.toISOString().split('T')[0] // YYYY-MM-DD形式
     const seed = parseInt(dateString.replace(/-/g, '')) // 日付を数値に変換
     
     // シードベースのランダム選択（同じ日は同じ選手）
