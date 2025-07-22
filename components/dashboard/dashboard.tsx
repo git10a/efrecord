@@ -459,6 +459,11 @@ export default function Dashboard({ userId }: DashboardProps) {
                   <span className="text-gray-500 mx-1">{userStats?.total_draws || 0}分</span> 
                   <span className="text-red-500 font-medium">{userStats?.total_losses || 0}敗</span>
                 </div>
+                <Link href="/rankings" className="inline-block mt-3">
+                  <span className="text-xs text-blue-600 hover:text-blue-800 hover:underline transition-colors cursor-pointer">
+                    勝率ランキングを見る
+                  </span>
+                </Link>
               </div>
             </Card>
             
