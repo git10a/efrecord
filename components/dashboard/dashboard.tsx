@@ -358,7 +358,7 @@ export default function Dashboard({ userId }: DashboardProps) {
                 </div>
                 <Link href="/rankings" className="inline-block mt-3">
                   <span className="text-xs text-blue-600 hover:text-blue-800 hover:underline transition-colors cursor-pointer">
-                    勝率ランキングを見る
+                    勝率を見る
                   </span>
                 </Link>
               </div>

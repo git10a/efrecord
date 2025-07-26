@@ -48,13 +48,15 @@ export async function fetchTeamRankings(): Promise<UserStatsWithPoints[]> {
     const points = pointsMap.get(stat.user_id) || { totalScored: 0, totalConceded: 0 }
     const winRate = calculateWinRate(stat.total_wins, stat.total_matches)
     const averagePointsScored = calculateAveragePoints(points.totalScored, stat.total_matches)
+    const averagePointsConceded = calculateAveragePoints(points.totalConceded, stat.total_matches)
 
     return {
       ...stat,
       win_rate: winRate,
       total_points_scored: points.totalScored,
       total_points_conceded: points.totalConceded,
-      average_points_scored: averagePointsScored
+      average_points_scored: averagePointsScored,
+      average_points_conceded: averagePointsConceded
     }
   })
 
@@ -98,12 +100,14 @@ export async function fetchUserTeamRanking(userId: string): Promise<UserStatsWit
 
   const winRate = calculateWinRate(userStat.total_wins, userStat.total_matches)
   const averagePointsScored = calculateAveragePoints(totalScored, userStat.total_matches)
+  const averagePointsConceded = calculateAveragePoints(totalConceded, userStat.total_matches)
 
   return {
     ...userStat,
     win_rate: winRate,
     total_points_scored: totalScored,
     total_points_conceded: totalConceded,
-    average_points_scored: averagePointsScored
+    average_points_scored: averagePointsScored,
+    average_points_conceded: averagePointsConceded
   }
 }

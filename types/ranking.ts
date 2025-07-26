@@ -5,9 +5,10 @@ export interface UserStatsWithPoints extends UserStats {
   total_points_scored: number
   total_points_conceded: number
   average_points_scored: number
+  average_points_conceded: number
 }
 
-export type RankingType = 'win_rate' | 'total_wins' | 'total_points' | 'average_points'
+export type RankingType = 'win_rate' | 'total_wins' | 'total_points' | 'average_points' | 'total_goals_conceded' | 'average_goals_conceded'
 
 export interface RankingConfig {
   type: RankingType
@@ -15,6 +16,7 @@ export interface RankingConfig {
   shortLabel: string
   primaryMetric: keyof UserStatsWithPoints
   formatPrimary: (value: number) => string
+  sortOrder?: 'asc' | 'desc' // 昇順または降順ソート（デフォルトは降順）
   secondaryMetrics: Array<{
     key: keyof UserStatsWithPoints
     label: string

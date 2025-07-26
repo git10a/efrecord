@@ -4,7 +4,7 @@ import { RankingTabsProps, RankingType } from '@/types/ranking'
 import { rankingConfigs } from '@/lib/ranking/config'
 
 export function RankingTabs({ activeTab, onTabChange }: RankingTabsProps) {
-  const tabs: RankingType[] = ['win_rate', 'total_wins', 'total_points', 'average_points']
+  const tabs: RankingType[] = ['win_rate', 'total_wins', 'total_points', 'average_points', 'total_goals_conceded', 'average_goals_conceded']
 
   return (
     <div className="border-b border-gray-200">

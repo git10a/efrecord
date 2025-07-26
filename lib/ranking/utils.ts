@@ -79,6 +79,37 @@ export function sortTeamsByRanking(
           return (a.team_name || '').localeCompare(b.team_name || '')
         })
 
+    case 'total_goals_conceded':
+      return sortedTeams.sort((a, b) => {
+        // Primary sort by total points conceded (ascending - lower is better)
+        if (a.total_points_conceded !== b.total_points_conceded) {
+          return a.total_points_conceded - b.total_points_conceded
+        }
+        // Tie-breaker 1: total matches (descending)
+        if (b.total_matches !== a.total_matches) {
+          return b.total_matches - a.total_matches
+        }
+        // Tie-breaker 2: team name (ascending)
+        return (a.team_name || '').localeCompare(b.team_name || '')
+      })
+
+    case 'average_goals_conceded':
+      // Exclude teams with zero matches from average goals conceded ranking
+      return sortedTeams
+        .filter(team => team.total_matches > 0)
+        .sort((a, b) => {
+          // Primary sort by average points conceded (ascending - lower is better)
+          if (a.average_points_conceded !== b.average_points_conceded) {
+            return a.average_points_conceded - b.average_points_conceded
+          }
+          // Tie-breaker 1: total matches (descending)
+          if (b.total_matches !== a.total_matches) {
+            return b.total_matches - a.total_matches
+          }
+          // Tie-breaker 2: team name (ascending)
+          return (a.team_name || '').localeCompare(b.team_name || '')
+        })
+
     default:
       return sortedTeams
   }
