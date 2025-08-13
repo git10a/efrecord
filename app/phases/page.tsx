@@ -1,9 +1,9 @@
 import PhaseOverview from '@/components/phase/phase-overview';
-import PageLayout from '@/components/layout/page-layout';
+import { PageLayout } from '@/components/layout/page-layout';
 
 export default function PhasesPage() {
   return (
-    <PageLayout>
+    <PageLayout title="フェーズ管理">
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           🎯 フェーズ管理
