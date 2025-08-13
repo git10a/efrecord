@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getCurrentPhase, getUserPhaseStats, getTotalStats } from '@/lib/phase/api';
-import { Phase, PhaseSummary } from '@/lib/phase/api';
+import { getCurrentPhase, getUserPhaseStats, getTotalStats, PhaseSummary } from '@/lib/phase/api';
+import { Phase } from '@/types/supabase';
 import { getPhaseProgress, getTimeRemainingText } from '@/lib/phase/utils';
 
 export default function PhaseOverview() {
