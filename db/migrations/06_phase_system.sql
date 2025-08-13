@@ -1,8 +1,8 @@
 -- フェーズ制システムの実装
 -- 2025-01-XX
 
--- 1. phasesテーブルの作成
-CREATE TABLE phases (
+-- 1. phasesテーブルの作成（既存の場合はスキップ）
+CREATE TABLE IF NOT EXISTS phases (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(100) NOT NULL,
   start_date DATE NOT NULL,
@@ -11,11 +11,19 @@ CREATE TABLE phases (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. matchesテーブルにphase_idカラムを追加
-ALTER TABLE matches ADD COLUMN phase_id UUID REFERENCES phases(id);
+-- 2. matchesテーブルにphase_idカラムを追加（既存の場合はスキップ）
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'matches' AND column_name = 'phase_id'
+  ) THEN
+    ALTER TABLE matches ADD COLUMN phase_id UUID REFERENCES phases(id);
+  END IF;
+END $$;
 
 -- 3. phase_statsテーブルの作成（フェーズ別統計）
-CREATE TABLE phase_stats (
+CREATE TABLE IF NOT EXISTS phase_stats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   phase_id UUID REFERENCES phases(id) ON DELETE CASCADE,
@@ -30,27 +38,28 @@ CREATE TABLE phase_stats (
   UNIQUE(user_id, phase_id)
 );
 
--- 4. インデックスの作成
-CREATE INDEX idx_matches_phase_id ON matches(phase_id);
-CREATE INDEX idx_phase_stats_user ON phase_stats(user_id);
-CREATE INDEX idx_phase_stats_phase ON phase_stats(phase_id);
-CREATE INDEX idx_phases_active ON phases(is_active);
-CREATE INDEX idx_phases_dates ON phases(start_date, end_date);
+-- 4. インデックスの作成（既存の場合はスキップ）
+CREATE INDEX IF NOT EXISTS idx_matches_phase_id ON matches(phase_id);
+CREATE INDEX IF NOT EXISTS idx_phase_stats_user ON phase_stats(user_id);
+CREATE INDEX IF NOT EXISTS idx_phase_stats_phase ON phase_stats(phase_id);
+CREATE INDEX IF NOT EXISTS idx_phases_active ON phases(is_active);
+CREATE INDEX IF NOT EXISTS idx_phases_dates ON phases(start_date, end_date);
 
--- 5. 初期フェーズデータの挿入
--- フェーズ1: 2025/7/14〜2025/8/13の記録
+-- 5. 初期フェーズデータの挿入（既存の場合はスキップ）
 INSERT INTO phases (name, start_date, end_date, is_active) 
-VALUES ('フェーズ1', '2025-07-14', '2025-08-13', true);
+SELECT 'フェーズ1', '2025-07-14', '2025-08-13', true
+WHERE NOT EXISTS (SELECT 1 FROM phases WHERE name = 'フェーズ1');
 
--- フェーズ2: 2025/08/14から4週間（木曜始まり木曜終わり）
 INSERT INTO phases (name, start_date, end_date, is_active) 
-VALUES ('フェーズ2', '2025-08-14', '2025-09-11', false);
+SELECT 'フェーズ2', '2025-08-14', '2025-09-11', false
+WHERE NOT EXISTS (SELECT 1 FROM phases WHERE name = 'フェーズ2');
 
 -- 6. 既存の試合記録をフェーズ1に割り当て（2025/7/14〜2025/8/13の期間の記録）
 UPDATE matches SET phase_id = (SELECT id FROM phases WHERE name = 'フェーズ1' LIMIT 1)
 WHERE phase_id IS NULL 
   AND match_date >= '2025-07-14' 
-  AND match_date <= '2025-08-13';
+  AND match_date <= '2025-08-13'
+  AND EXISTS (SELECT 1 FROM phases WHERE name = 'フェーズ1');
 
 -- 7. フェーズ別統計の初期化（2025/7/14〜2025/8/13の期間の記録用）
 INSERT INTO phase_stats (user_id, phase_id, matches, wins, draws, losses, goals_for, goals_against)
@@ -66,6 +75,10 @@ SELECT
 FROM matches m
 JOIN phases p ON p.name = 'フェーズ1'
 WHERE m.match_date >= '2025-07-14' AND m.match_date <= '2025-08-13'
+  AND NOT EXISTS (
+    SELECT 1 FROM phase_stats ps 
+    WHERE ps.user_id = m.user_id AND ps.phase_id = p.id
+  )
 GROUP BY m.user_id, p.id;
 
 -- 8. フェーズ管理用の関数
@@ -142,6 +155,9 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- 既存のトリガーを削除してから再作成
+DROP TRIGGER IF EXISTS update_phase_stats_after_match ON matches;
 
 CREATE TRIGGER update_phase_stats_after_match
   AFTER INSERT OR UPDATE ON matches
