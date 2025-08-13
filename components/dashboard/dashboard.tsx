@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardHeader } from '@/components/ui/card'
@@ -9,6 +9,8 @@ import { Trophy, Target, TrendingUp, Plus, LogOut, Activity, Flame, CloudRain, Z
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { GachaPlayerFeature } from '@/components/gacha/GachaPlayerFeature'
+import { getCurrentPhase } from '@/lib/phase/api'
+import { Phase } from '@/types/supabase'
 
 interface DashboardProps {
   userId: string
@@ -71,6 +73,7 @@ export default function Dashboard({ userId }: DashboardProps) {
   const supabase = createClient()
   const router = useRouter()
   const [globalPeriod, setGlobalPeriod] = useState<PeriodFilter>('all')
+  const [currentPhase, setCurrentPhase] = useState<Phase | null>(null)
 
   const { data: userStats } = useQuery({
     queryKey: ['userStats', userId],
@@ -154,6 +157,20 @@ export default function Dashboard({ userId }: DashboardProps) {
       return data
     }
   })
+
+  // 現在のフェーズを取得
+  useEffect(() => {
+    async function fetchCurrentPhase() {
+      try {
+        const phase = await getCurrentPhase()
+        setCurrentPhase(phase)
+      } catch (error) {
+        console.error('現在のフェーズ取得エラー:', error)
+      }
+    }
+
+    fetchCurrentPhase()
+  }, [])
 
 
   const getResultColor = (result: string) => {
@@ -352,6 +369,18 @@ export default function Dashboard({ userId }: DashboardProps) {
           <div className="grid grid-cols-2 gap-4">
             <Card className="text-center bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
               <div className="p-6">
+                {/* フェーズ情報 */}
+                {currentPhase && (
+                  <div className="mb-3">
+                    <div className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                      🎯 {currentPhase.name}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {new Date(currentPhase.start_date).toLocaleDateString('ja-JP')} 〜 {new Date(currentPhase.end_date).toLocaleDateString('ja-JP')}
+                    </div>
+                  </div>
+                )}
+                
                 <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Target className="w-6 h-6 text-white" />
                 </div>
@@ -377,6 +406,18 @@ export default function Dashboard({ userId }: DashboardProps) {
             
             <Card className="bg-white border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
               <div className="p-6">
+                {/* フェーズ情報 */}
+                {currentPhase && (
+                  <div className="mb-3">
+                    <div className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                      📊 {currentPhase.name}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {new Date(currentPhase.start_date).toLocaleDateString('ja-JP')} 〜 {new Date(currentPhase.end_date).toLocaleDateString('ja-JP')}
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex items-center justify-center mb-3">
                   <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
                     <Activity className="w-6 h-6 text-white" />
