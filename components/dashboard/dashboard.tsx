@@ -279,6 +279,17 @@ export default function Dashboard({ userId }: DashboardProps) {
                 </div>
               </Link>
 
+              {/* フェーズ管理ボタン */}
+              <Link href="/phases">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="h-9 border-gray-200 hover:border-gray-300 text-gray-700 hover:text-gray-900 hover:bg-gray-50 shadow-sm transition-all duration-200"
+                >
+                  フェーズ管理
+                </Button>
+              </Link>
+
               {/* チーム管理ボタン */}
               <Link href="/teams">
                 <Button 

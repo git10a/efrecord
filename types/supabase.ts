@@ -24,6 +24,29 @@ export interface Opponent {
   created_at: string;
 }
 
+export interface Phase {
+  id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface PhaseStats {
+  id: string;
+  user_id: string;
+  phase_id: string;
+  matches: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goals_for: number;
+  goals_against: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Match {
   id: string;
   user_id: string;
@@ -33,6 +56,7 @@ export interface Match {
   result: 'win' | 'draw' | 'loss';
   match_date: string;
   memo: string | null;
+  phase_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -154,6 +178,7 @@ export interface Database {
           result?: 'win' | 'draw' | 'loss';
           match_date?: string;
           memo?: string | null;
+          phase_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -166,6 +191,7 @@ export interface Database {
           result?: 'win' | 'draw' | 'loss';
           match_date?: string;
           memo?: string | null;
+          phase_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -307,6 +333,54 @@ export interface Database {
           losses?: number;
           goals_for?: number;
           goals_against?: number;
+          updated_at?: string;
+        };
+      };
+      phases: {
+        Row: Phase;
+        Insert: {
+          id?: string;
+          name: string;
+          start_date: string;
+          end_date: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          start_date?: string;
+          end_date?: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+      };
+      phase_stats: {
+        Row: PhaseStats;
+        Insert: {
+          id?: string;
+          user_id: string;
+          phase_id: string;
+          matches?: number;
+          wins?: number;
+          draws?: number;
+          losses?: number;
+          goals_for?: number;
+          goals_against?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          phase_id?: string;
+          matches?: number;
+          wins?: number;
+          draws?: number;
+          losses?: number;
+          goals_for?: number;
+          goals_against?: number;
+          created_at?: string;
           updated_at?: string;
         };
       };

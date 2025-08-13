@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { PageLayout } from '@/components/layout/page-layout'
 import { GridScoreInput } from '@/components/ui/grid-score-input'
 import { Plus } from 'lucide-react'
+import { getCurrentPhase } from '@/lib/phase/api'
 
 interface Opponent {
   id: string
@@ -80,6 +81,12 @@ export default function NewMatchPage() {
         return
       }
 
+      // 現在のフェーズを取得
+      const currentPhase = await getCurrentPhase()
+      if (!currentPhase) {
+        throw new Error('現在のフェーズが取得できません')
+      }
+
       // 結果を計算
       let result = 'draw'
       if (userScore > opponentScore) result = 'win'
@@ -96,6 +103,7 @@ export default function NewMatchPage() {
           result: result,
           memo: memo.trim() || null,
           match_date: new Date().toISOString().split('T')[0],
+          phase_id: currentPhase.id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
