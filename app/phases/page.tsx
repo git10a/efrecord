@@ -1,7 +1,16 @@
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 import PhaseOverview from '@/components/phase/phase-overview';
 import { PageLayout } from '@/components/layout/page-layout';
 
-export default function PhasesPage() {
+export default async function PhasesPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/auth/login');
+  }
+
   return (
     <PageLayout title="フェーズ管理">
       <div className="container mx-auto px-4 py-8">
@@ -13,7 +22,7 @@ export default function PhasesPage() {
           各フェーズは4週間（木曜始まり木曜終わり）で区切られています。
         </p>
         
-        <PhaseOverview />
+        <PhaseOverview userId={user.id} />
       </div>
     </PageLayout>
   );

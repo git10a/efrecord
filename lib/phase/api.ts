@@ -134,9 +134,10 @@ export async function getTotalStats(userId: string): Promise<{
 }> {
   const supabase = createClient();
   
+  // 実際の試合記録から累計統計を取得
   const { data, error } = await supabase
-    .from('phase_stats')
-    .select('*')
+    .from('matches')
+    .select('result, user_score, opponent_score')
     .eq('user_id', userId);
     
   if (error) {
@@ -153,12 +154,12 @@ export async function getTotalStats(userId: string): Promise<{
     };
   }
   
-  const totalMatches = data.reduce((sum, stat) => sum + stat.matches, 0);
-  const totalWins = data.reduce((sum, stat) => sum + stat.wins, 0);
-  const totalDraws = data.reduce((sum, stat) => sum + stat.draws, 0);
-  const totalLosses = data.reduce((sum, stat) => sum + stat.losses, 0);
-  const totalGoalsFor = data.reduce((sum, stat) => sum + stat.goals_for, 0);
-  const totalGoalsAgainst = data.reduce((sum, stat) => sum + stat.goals_against, 0);
+  const totalMatches = data.length;
+  const totalWins = data.filter(match => match.result === 'win').length;
+  const totalDraws = data.filter(match => match.result === 'draw').length;
+  const totalLosses = data.filter(match => match.result === 'loss').length;
+  const totalGoalsFor = data.reduce((sum, match) => sum + match.user_score, 0);
+  const totalGoalsAgainst = data.reduce((sum, match) => sum + match.opponent_score, 0);
   
   return {
     totalMatches,

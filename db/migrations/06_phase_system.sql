@@ -38,19 +38,21 @@ CREATE INDEX idx_phases_active ON phases(is_active);
 CREATE INDEX idx_phases_dates ON phases(start_date, end_date);
 
 -- 5. 初期フェーズデータの挿入
--- フェーズ1: 今日までの記録（既存データ用）
+-- フェーズ1: 2025/7/14〜2025/8/13の記録
 INSERT INTO phases (name, start_date, end_date, is_active) 
-VALUES ('フェーズ1', '2020-01-01', CURRENT_DATE, true);
+VALUES ('フェーズ1', '2025-07-14', '2025-08-13', true);
 
 -- フェーズ2: 2025/08/14から4週間（木曜始まり木曜終わり）
 INSERT INTO phases (name, start_date, end_date, is_active) 
 VALUES ('フェーズ2', '2025-08-14', '2025-09-11', false);
 
--- 6. 既存の試合記録をフェーズ1に割り当て
+-- 6. 既存の試合記録をフェーズ1に割り当て（2025/7/14〜2025/8/13の期間の記録）
 UPDATE matches SET phase_id = (SELECT id FROM phases WHERE name = 'フェーズ1' LIMIT 1)
-WHERE phase_id IS NULL;
+WHERE phase_id IS NULL 
+  AND match_date >= '2025-07-14' 
+  AND match_date <= '2025-08-13';
 
--- 7. フェーズ別統計の初期化（既存データ用）
+-- 7. フェーズ別統計の初期化（2025/7/14〜2025/8/13の期間の記録用）
 INSERT INTO phase_stats (user_id, phase_id, matches, wins, draws, losses, goals_for, goals_against)
 SELECT 
   m.user_id,
@@ -63,6 +65,7 @@ SELECT
   SUM(m.opponent_score) as goals_against
 FROM matches m
 JOIN phases p ON p.name = 'フェーズ1'
+WHERE m.match_date >= '2025-07-14' AND m.match_date <= '2025-08-13'
 GROUP BY m.user_id, p.id;
 
 -- 8. フェーズ管理用の関数

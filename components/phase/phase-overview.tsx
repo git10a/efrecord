@@ -6,7 +6,11 @@ import { getCurrentPhase, getUserPhaseStats, getTotalStats, PhaseSummary } from 
 import { Phase } from '@/types/supabase';
 import { getPhaseProgress, getTimeRemainingText } from '@/lib/phase/utils';
 
-export default function PhaseOverview() {
+interface PhaseOverviewProps {
+  userId: string;
+}
+
+export default function PhaseOverview({ userId }: PhaseOverviewProps) {
   const [currentPhase, setCurrentPhase] = useState<Phase | null>(null);
   const [phaseStats, setPhaseStats] = useState<PhaseSummary[]>([]);
   const [totalStats, setTotalStats] = useState<any>(null);
@@ -17,8 +21,8 @@ export default function PhaseOverview() {
       try {
         const [phase, stats, total] = await Promise.all([
           getCurrentPhase(),
-          getUserPhaseStats('current-user-id'), // TODO: 実際のユーザーIDを使用
-          getTotalStats('current-user-id') // TODO: 実際のユーザーIDを使用
+          getUserPhaseStats(userId),
+          getTotalStats(userId)
         ]);
         
         setCurrentPhase(phase);
